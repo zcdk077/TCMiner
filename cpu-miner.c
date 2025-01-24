@@ -1096,11 +1096,11 @@ void report_summary_log( bool force )
    sprintf_et( upt_str, uptime.tv_sec );
 
    applog( LOG_BLUE, "%s: %s", algo_names[ opt_algo ], rpc_url );
-   applog2( LOG_NOTICE, "Periodic Report     %s        %s", et_str, upt_str );
-   applog2( LOG_INFO, "Share rate        %.2f/min     %.2f/min",
+   applog2( LOG_NOTICE,CL_LCY"Periodic Report     %s        %s", et_str, upt_str );
+   applog2( LOG_INFO, CL_YLW"Share rate        %.2f/min     %.2f/min",
             submit_rate, safe_div( (double)submitted_share_count*60.,
               ( (double)uptime.tv_sec + (double)uptime.tv_usec * 1e-6 ), 0. ) );
-   applog2( LOG_INFO, "Hash rate       %7.2f%sh/s   %7.2f%sh/s   (%.2f%sh/s)",
+   applog2( LOG_INFO,CL_YLW"Hash rate       %7.2f%sh/s   %7.2f%sh/s   (%.2f%sh/s)",
             shrate, shr_units, sess_hrate, sess_hr_units, ghrate, ghr_units );
 
    if ( accepted_share_count < submitted_share_count )
@@ -1117,16 +1117,16 @@ void report_summary_log( bool force )
                lost_shrate, lshr_units, lost_ghrate, lghr_units );
    }
 
-   applog2( LOG_INFO,"Submitted       %7d      %7d",
+   applog2( LOG_INFO,CL_LGR"Submitted       %7d      %7d",
                submits, submitted_share_count );
-   applog2( LOG_INFO, "Accepted!!        %7d      %7d      %5.1f%%",
+   applog2( LOG_INFO,CL_LGR"Accepted        %7d      %7d      %5.1f%%",
                       accepts, accepted_share_count,
                       100. * safe_div( (double)accepted_share_count, 
                                        (double)submitted_share_count, 0. ) ); 
    if ( stale_share_count )
    {
       int prio = stales ? LOG_MINR : LOG_INFO;
-      applog2( prio, "Stale!!           %7d      %7d      %5.1f%%",
+      applog2( prio,CL_LRD"Stale           %7d      %7d      %5.1f%%",
                       stales, stale_share_count,
                       100. * safe_div( (double)stale_share_count,
                                        (double)submitted_share_count, 0. ) );
@@ -1134,7 +1134,7 @@ void report_summary_log( bool force )
    if ( rejected_share_count )
    {
       int prio = rejects ? LOG_ERR : LOG_INFO;
-      applog2( prio, "Rejected!!        %7d      %7d      %5.1f%%",
+      applog2( prio,CL_LRD"Rejected        %7d      %7d      %5.1f%%",
                       rejects, rejected_share_count,
                       100. * safe_div( (double)rejected_share_count,
                                        (double)submitted_share_count, 0. ) );
@@ -1142,13 +1142,13 @@ void report_summary_log( bool force )
    if ( solved_block_count )
    {      
       int prio = solved ? LOG_PINK : LOG_INFO;
-      applog2( prio, "Blocks Solved   %7d      %7d",
+      applog2( prio,CL_LCY"Blocks Solved   %7d      %7d",
                solved, solved_block_count );
    }
    if ( stratum_errors )
       applog2( LOG_INFO, "Stratum resets               %7d", stratum_errors );
 
-   applog2( LOG_INFO, "Hi/Lo Share Diff  %.5g /  %.5g",
+   applog2( LOG_INFO,CL_LBL"Hi/Lo Share Diff  %.5g /  %.5g",
             highest_share, lowest_share );
 
    int mismatch = submitted_share_count
@@ -1231,8 +1231,8 @@ static int share_result( int result, struct work *work,
       }
       else
       {
-         sprintf( bres, "B%d", solved_block_count );
-         sprintf( ares, "Accepted %d", accepted_share_count );
+         sprintf( CL_LCY"B%d", solved_block_count );
+         sprintf( CL_LGR"Accepted!! "CL_N"["CL_LGR"%d"CL_N"]", accepted_share_count );
       }
    }
    else
@@ -1868,24 +1868,6 @@ bool submit_solution( struct work *work, const void *hash,
 
      if ( !opt_quiet )
      {
-        if ( have_stratum )
-        {
-           applog( LOG_INFO, "%d Submitted Diff %.5g, Block %d, Job %s",
-                   submitted_share_count, work->sharediff, work->height,
-                   work->job_id );
-           if ( opt_debug && opt_extranonce )
-           {
-              unsigned char *xnonce2str = abin2hex( work->xnonce2,
-                                                    work->xnonce2_len );
-              applog( LOG_INFO, "Xnonce2 %s", xnonce2str );
-              free( xnonce2str );
-           }
-        }
-        else
-           applog( LOG_INFO, "%d Submitted Diff %.5g, Block %d, Ntime %08x",
-                   submitted_share_count, work->sharediff, work->height,
-                   work->data[ algo_gate.ntime_index ] );
-
         if ( opt_debug )
         {
            uint32_t* h = (uint32_t*)hash;
