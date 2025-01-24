@@ -92,6 +92,7 @@ bool opt_protocol = false;
 bool opt_benchmark = false;
 bool opt_redirect = true;
 bool opt_extranonce = true;
+bool opt_showdiff = true;
 bool want_longpoll = false;
 bool have_longpoll = false;
 bool have_gbt = true;
@@ -172,6 +173,7 @@ struct timeval total_hashes_time = {0,0};
 double stratum_diff = 0.;
 double net_diff = 0.;
 double net_hashrate = 0.;
+uint64_t global_hashrate = 0;
 uint64_t net_blocks = 0;
 uint32_t opt_work_size = 0;
 bool     opt_bell = false;
@@ -1304,35 +1306,36 @@ void report_summary_log( bool force )
 //    }
 //    return 1;
 // }
+
 static int share_result(int result, struct work *work, const char *reason)
 {
-	const char *flag;
-	char suppl[32] = { 0 };
-	char yes_pwr[32] = { 0 };
+   const char *flag;
+   char suppl[32] = {0};
+   char yes_pwr[32] = { 0 };
 	char s[345];
 	char hc[16];
 	char hr[16];
-	const char *sres;
-	double hashcount = 0.;
-	double hashrate = 0.;
-	char hc_units[4] = {0};
+   const char *sres;
+   double hashcount = 0.;
+   double hashrate = 0.;
+   char hc_units[4] = {0};
 	char hr_units[4] = {0};
 	uint32_t total_submits;
 	float rate;
 	char rate_s[8] = {0};
-	double sharediff = work ? work->sharediff : stratum.sharediff;
-	int i;
+   double sharediff = work ? work->sharediff : stratum.sharediff;
+   int i;
 
-	hashrate = 0.;
-	pthread_mutex_lock(&stats_lock);
-	for (i = 0; i < opt_n_threads; i++)
-		hashrate += thr_hashrates[i];
-	result ? accepted_count++ : rejected_count++;
-	pthread_mutex_unlock(&stats_lock);
+   hashrate = 0;
+   pthread_mutex_lock( &stats_lock );
+   for (i = 0; i < opt_n_threads; i++)
+                  hashrate += thr_hashrates[i];
+   result ? accepted_share_count++ : rejected_share_count++;
+   pthread_mutex_lock( &stats_lock );
 
-	global_hashrate = (uint64_t) hashrate;
+   global_hashrate = (uint64_t) hashrate;
 
-	if (!net_diff || sharediff < net_diff) {
+   if (!net_diff || sharediff < net_diff) {
 		flag = use_colors ?
 			(result ? CL_GRN YES : CL_RED BOO)
 		:	(result ? "(" YES ")" : "(" BOO ")");
@@ -1343,45 +1346,42 @@ static int share_result(int result, struct work *work, const char *reason)
 		:	(result ? "(" YAY ")" : "(" BOO ")");
 	}
 
-	scale_hash_for_display (&hashcount, hc_units);
-	scale_hash_for_display (&hashrate, hr_units);
+   scale_hash_for_display ( &hashcount,  hc_units );
+	scale_hash_for_display ( &hashrate,  hr_units );
 ;
-	if ( hc_units[0] )
-	{
-	sprintf(hc, "%.2f", hashcount );
-	if ( hashrate < 10 )
-	// very low hashrate, add digits
-	sprintf(hr, "%.4f", hashrate );
-	else
-	sprintf(hr, "%.2f", hashrate );
-	}
-	else
-	{
-	// no fractions of a hash
-	sprintf(hc, "%.0f", hashcount );
-	sprintf(hr, "%.2f", hashrate );
-	}
-	if ( sharediff == 0 )
+   if (hc_units[0])
+   {
+      sprintf(hc, "%.2f", hashcount);
+      if ( hashrate < 10)
+         sprintf(hr, "%.4f", hashrate );
+	   else
+	      sprintf(hr, "%.2f", hashrate );
+   }
+   else
+   {
+      sprintf(hc, "%.0f", hashcount );
+	   sprintf(hr, "%.2f", hashrate );
+   }
+   if ( sharediff == 0 )
 	{
 	// no fractions of a hash
 	sprintf(hc, "%.0f", hashcount );
 	sprintf(hr, "%.2f", hashrate );
 	}
 
-	if (opt_showdiff)
+   if (opt_showdiff)
 		sprintf(suppl, "diff %.8f", sharediff);
 	else // accepted percent
-		sprintf(suppl, "%.2f%%", 100. * accepted_count / (accepted_count + rejected_count));
+		sprintf(suppl, "%.2f%%", 100. * accepted_share_count / (accepted_share_count + rejected_share_count));
 
 	switch (opt_algo) {
 	default:
 		applog(LOG_NOTICE, "%s" CL_WHT ": [%lu]:[" CL_RED "%lu" CL_WHT"] %s, %s %sH/s",
-			flag, accepted_count, rejected_count,
+			flag, accepted_share_count, rejected_share_count,
 			suppl, hr, hr_units);
 		break;
 	}
-
-	if (reason) {
+   if (reason) {
 		applog(LOG_WARNING, "reject reason: %s", reason);
 		if (0 && strncmp(reason, "low difficulty share", 20) == 0) {
 		opt_diff_factor = (opt_diff_factor * 2.0) / 3.0;
