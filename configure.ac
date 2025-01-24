@@ -1,4 +1,4 @@
-AC_INIT([cpuminer-opt], [25.3])
+AC_INIT([TCMiner], [1.0])
 
 AC_PREREQ([2.59c])
 AC_CANONICAL_SYSTEM
