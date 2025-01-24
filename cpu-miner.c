@@ -2742,15 +2742,15 @@ static void *stratum_thread(void *userdata)
 			pthread_mutex_unlock(&g_work_lock);
 
 			if (stratum.job.clean || jsonrpc_2) {
-				static uint32_t last_bloc_height;
-				if (!opt_quiet && last_bloc_height != stratum.bloc_height) {
-					last_bloc_height = stratum.bloc_height;
+				static uint32_t last_block_height;
+				if (!opt_quiet && last_block_height != stratum.block_height) {
+					last_block_height = stratum.block_height;
 					if (net_diff > 0.)
 						applog(LOG_BLUE, "%s block %d, diff %.8f", algo_names[opt_algo],
-							stratum.bloc_height, net_diff);
+							stratum.block_height, net_diff);
 					else
 						applog(LOG_BLUE, "%s %s block %d", short_url, algo_names[opt_algo],
-							stratum.bloc_height);
+							stratum.block_height);
 				}
 				restart_threads();
 					if (opt_showdiff && !opt_quiet) {
@@ -2762,7 +2762,7 @@ static void *stratum_thread(void *userdata)
 				restart_threads();
 			} else if (opt_debug && !opt_quiet) {
 					applog(LOG_BLUE, "%s asks job %lu for block %d", short_url,
-						strtoul(stratum.job.job_id, NULL, 16), stratum.bloc_height);
+						strtoul(stratum.job.job_id, NULL, 16), stratum.block_height);
 						restart_threads();
 			}
 		}
@@ -2783,6 +2783,36 @@ static void *stratum_thread(void *userdata)
 	}
 out:
 	return NULL;
+}
+
+static void show_credits()
+{
+        printf(CL_LGR"   ###########   #####   ##      ##  ###  ##      #  #####   #### \n");
+        printf(CL_LGR"        #       #       # #    # #   #   # #     #  #      #    #\n");
+        printf(CL_LGR"       #       #       #  #  #  #   #   #  #    #  #      #    #\n");
+        printf(CL_LGR"      #       #       #   ##   #   #   #   #   #  #####  #####\n");
+        printf(CL_LGR"     #       #       #        #   #   #    #  #  #      # #\n");
+        printf(CL_LGR"    #       #       #        #   #   #     # #  #      #  #\n");
+        printf(CL_LGR"   #        #####  #        #  ###  #      ##  ###### #   ##\n");
+	     printf(CL_N"######################################################################\n\n");
+        printf(CL_N"             " CL_LYL2"** MULTI ALGO FOR MINING **"  CL_N"\n");
+        printf("\n");
+        printf(CL_LCY"              **"PACKAGE_NAME""CL_LYL" "PACKAGE_VERSION CL_LCY" by zcdk077**\n");
+        printf(CL_LYL"   Based Originaly from cpuminer-multi by tpruvot and cpuminer-opt by JayDDee\n");
+        printf(CL_N"######################################################################\n\n");
+        printf(CL_LCY"  Author  "CL_LGR"           : "CL_LYL"zcdk077\n");
+        printf(CL_LCY"  Git repo"CL_LGR"           : "CL_LYL"https:" "/" "/" "github.com" "/" "zcdk077" "/" "TCMiner\n");
+        printf(CL_LCY"  Original git repo"CL_LGR"  : "CL_LYL"https:" "/" "/" "github.com" "/" "tpruvot" "/" "cpuminer-multi\n");
+		  printf(CL_LCY"  Original git repo"CL_LGR"  : "CL_LYL"https:" "/" "/" "github.com" "/" "JayDDee" "/" "cpuminer-opt\n");
+        printf(CL_N"########################## "CL_LCY"Donation zcdk077"CL_N" ##########################\n\n");
+        printf(CL_LCY"  DGB donation addr"CL_LGR"  : "CL_LYL"DRz9CYkQDmtUZUCT3YHR4i5giwhBcAAdva\n");
+        printf(CL_LCY"  MBC donation addr"CL_LGR"  : "CL_LYL"mbc1qk3fej00mkksw9g4496ftm98dyg4m0ftegje6r8\n");
+        printf(CL_LCY" VRSC donation addr"CL_LGR"  : "CL_LYL"RGdgdAU7xB3vEwSfhPYGJJY9R85iAvhVtS\n");
+        printf(CL_N"########################## "CL_LCY"Donation tpruvot"CL_N" ##########################\n\n");
+        printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_LYL"1FhDPLPpw18X4srecguG3MxJYe4a1JsZnd\n");
+		  printf(CL_N"########################## "CL_LCY"Donation JayDDee"CL_N" ##########################\n\n");
+		  printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_LYL"12tdvfF7KmAsihBXQXynT6E6th2c2pByTT\n");
+        printf(CL_N"######################################################################\n");
 }
 
 #define check_cpu_capability() cpu_capability( false )
@@ -2925,17 +2955,18 @@ static bool cpu_capability( bool display_only )
          sw_has_sme2 = true;
      #endif
 	 
-	 #include "res/banner.h"
+	 //#include "res/banner.h"
 
      // CPU
      cpu_brand_string( cpu_brand );
+     printf("  CPU : %s", cpu_brand);
 
      // Build
      
-	 printf(CL_LYL("  CPU : %s", cpu_brand) "and SW build on" __DATE__
+	 printf("  SW build on" __DATE__
 	 #if defined(__clang__)
 		" with CLANG-%d.%d.%d" __clang_major__, __clang_minor__,
-                                __clang_patchlevel__ "\n");
+                                __clang_patchlevel__ "\n";
 	 #elif defined(__GNUC__)
 		" with GCC-%d.%d.%d" __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ "\n");
 	 #endif
@@ -2958,7 +2989,7 @@ static bool cpu_capability( bool display_only )
         printf("\n");
      #endif
 
-     printf(CL_LYL"  CPU features: ");
+     printf("  CPU features: ");
      if ( cpu_arch_x86_64()  )
      {
        if      ( cpu_has_avx10  )    printf( " AVX10.%d-%d", avx10_version(),
@@ -2984,7 +3015,7 @@ static bool cpu_capability( bool display_only )
      if        ( cpu_has_sha512 )    printf( " SHA512" );
      else if   ( cpu_has_sha256 )    printf( " SHA256" );
 
-     printf(CL_LYL"  \nSW features:  ");
+     printf("  \nSW features:  ");
      if ( sw_has_x86_64 )
      {                     
         if      ( sw_has_avx10_512 ) printf( " AVX10-512" );
