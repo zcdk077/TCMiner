@@ -1232,8 +1232,8 @@ static int share_result( int result, struct work *work,
       }
       else
       {
-         sprintf( CL_LCY"B%d", solved_block_count );
-         sprintf( CL_LGR"Accepted!! "CL_N"["CL_LGR"%d"CL_N"]", accepted_share_count );
+         sprintf( bres, "B%d", solved_block_count );
+         sprintf( ares, CL_GRN"Accepted!! "CL_N"["CL_GRN"%d"CL_N"]", accepted_share_count );
       }
    }
    else
