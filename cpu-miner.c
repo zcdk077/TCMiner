@@ -3004,14 +3004,13 @@ static bool cpu_capability( bool display_only )
      printf("  CPU : %s", cpu_brand);
 
      // Build
-     
-	 printf("  SW build on" __DATE__
-	 #if defined(__clang__)
-		" with CLANG-%d.%d.%d" __clang_major__, __clang_minor__,
-                                __clang_patchlevel__ "\n";
-	 #elif defined(__GNUC__)
-		" with GCC-%d.%d.%d" __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ "\n");
-	 #endif
+     printf( "SW built on " __DATE__
+     #if defined(__clang__)
+        " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__,
+                                __clang_patchlevel__ );
+     #elif defined(__GNUC__)
+        " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
+     #endif
 
      // OS
      #if defined(__linux)
