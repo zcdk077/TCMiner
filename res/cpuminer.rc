@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Anglais (États-Unis) resources
+// Anglais (Ã‰tats-Unis) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -76,10 +76,10 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "FileVersion", "1.2"
-            VALUE "LegalCopyright", "Copyright (C) 2015"
-            VALUE "ProductName", "cpuminer-opt"
-            VALUE "ProductVersion", "1.2"
+            VALUE "FileVersion", "1.0"
+            VALUE "LegalCopyright", "Copyright (C) 2025"
+            VALUE "ProductName", "TCMiner"
+            VALUE "ProductVersion", "1.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -88,7 +88,7 @@ BEGIN
     END
 END
 
-#endif    // Anglais (États-Unis) resources
+#endif    // Anglais (Ã‰tats-Unis) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
