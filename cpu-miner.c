@@ -2999,31 +2999,31 @@ static bool cpu_capability( bool display_only )
 
      #if defined(__clang__)
          cpu_brand_string(cpu_brand);
-         printf(CL_LGR"  CPU : %s", cpu_brand "SW built on" __DATE__ " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__ );
+         printf(CL_LGR"  CPU : %s", cpu_brand ); printf(CL_LGR"|| SW built on" __DATE__ " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__ );
      #elif defined(__GNUC__)
          cpu_brand_string(cpu_brand);
-         printf(CL_LGR"  CPU : %s", cpu_brand "SW built on" __DATE__ " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
+         printf(CL_LGR"  CPU : %s", cpu_brand ); printf(CL_LGR"|| SW built on" __DATE__ " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
      #endif
 
      // OS
      #if defined(__linux)
-        printf(CL_LGR" Linux\n");
+        printf(CL_LGR"|| Linux\n");
      #elif defined(WIN32)
-        printf(CL_LGR" Windows");
+        printf(CL_LGR"|| Windows");
         #if defined(__MINGW64__)
-          printf(CL_LGR" MinGW-w64\n");
+          printf(CL_LGR"|| MinGW-w64\n");
         #else
           printf("\n");
         #endif
      #elif defined(__APPLE__)
-        printf(CL_LGR" MacOS\n");
+        printf(CL_LGR"|| MacOS\n");
      #elif defined(__bsd__) || defined(__unix__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) 
-        printf(CL_LGR" BSD/Unix\n");
+        printf(CL_LGR"|| BSD/Unix\n");
      #else
         printf("\n");
      #endif
 
-     printf(CL_LGR"  CPU features: ");
+     printf(CL_LGR"  CPU features : ");
      if ( cpu_arch_x86_64()  )
      {
        if      ( cpu_has_avx10  )    printf( " AVX10.%d-%d", avx10_version(),
@@ -3049,7 +3049,7 @@ static bool cpu_capability( bool display_only )
      if        ( cpu_has_sha512 )    printf( " SHA512" );
      else if   ( cpu_has_sha256 )    printf( " SHA256" );
 
-     printf(CL_LGR"  \nSW features:  ");
+     printf(CL_LGR"\n  SW features :  "CL_N);
      if ( sw_has_x86_64 )
      {                     
         if      ( sw_has_avx10_512 ) printf( " AVX10-512" );
