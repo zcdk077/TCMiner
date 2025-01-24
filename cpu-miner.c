@@ -2682,107 +2682,149 @@ void std_build_extraheader( struct work* g_work, struct stratum_ctx* sctx )
 //   handle message
 
 
-static void *stratum_thread(void *userdata)
+static void *stratum_thread(void *userdata )
 {
-	struct thr_info *mythr = (struct thr_info *) userdata;
-	char *s;
+   struct thr_info *mythr = (struct thr_info *) userdata;
+   char *s = NULL;
 
-	stratum.url = (char*) tq_pop(mythr->q, NULL);
-	if (!stratum.url)
-		goto out;
-	applog(LOG_INFO, CL_CY2 "Starting Stratum on %s", stratum.url);
+   stratum.url = (char*) tq_pop(mythr->q, NULL);
+   if (!stratum.url)
+      goto out;
+   applog( LOG_INFO, CL_CY2 "Starting Stratum on %s", stratum.url );
 
-	while (1) {
-		int failures = 0;
+   while (1)
+   {
+      int failures = 0;
 
-		if (stratum_need_reset) {
-			stratum_need_reset = false;
-			stratum_disconnect(&stratum);
-			if (strcmp(stratum.url, rpc_url)) {
-				free(stratum.url);
-				stratum.url = strdup(rpc_url);
-				applog(LOG_BLUE, "Connection changed to %s", short_url);
-			} else if (!opt_quiet) {
-				applog(LOG_DEBUG, "Stratum connection reset");
-			}
-		}
+      if ( unlikely( stratum_need_reset ) )
+      {
+          stratum_need_reset = false;
+          gettimeofday( &stratum_reset_time, NULL );
+          stratum_down = true;
+          stratum_errors++;
+          stratum_disconnect( &stratum );
+          if ( strcmp( stratum.url, rpc_url ) )
+          {
+	          free( stratum.url );
+	          stratum.url = strdup( rpc_url );
+	          applog(LOG_BLUE, "Connection changed to %s", short_url);
+          }
+          else 
+	          applog(LOG_DEBUG, "Stratum connection reset");
+          // reset stats queue as well
+          restart_threads();
+          if ( s_get_ptr != s_put_ptr ) s_get_ptr = s_put_ptr = 0;
+      }
 
-		while (!stratum.curl) {
-			pthread_mutex_lock(&g_work_lock);
-			g_work_time = 0;
-			pthread_mutex_unlock(&g_work_lock);
-			restart_threads();
+      while ( !stratum.curl )
+      {
+         stratum_down = true;
+         restart_threads();
+         pthread_rwlock_wrlock( &g_work_lock );
+         g_work_time = 0;
+         pthread_rwlock_unlock( &g_work_lock );
+         if ( !stratum_connect( &stratum, stratum.url )
+              || !stratum_subscribe( &stratum )
+              || !stratum_authorize( &stratum, rpc_user, rpc_pass ) )
+         {
+            stratum_disconnect( &stratum );
+            if (opt_retries >= 0 && ++failures > opt_retries)
+            {
+               applog(LOG_ERR, "...terminating workio thread");
+               tq_push(thr_info[work_thr_id].q, NULL);
+               goto out;
+            }
+            if (!opt_benchmark)
+                applog(LOG_ERR, "...retry after %d seconds", opt_fail_pause);
+            sleep(opt_fail_pause);
+         }
+         else
+         {
+// sometimes stratum connects but doesn't immediately send a job, wait for one.
+//            stratum_down = false;
+            applog(LOG_BLUE,"Stratum connection established" );
+            if ( stratum.new_job )   // prime first job
+            {
+               stratum_down = false;
+               stratum_gen_work( &stratum, &g_work );
+            }
+         }
+      }
 
-			if (!stratum_connect(&stratum, stratum.url)
-					|| !stratum_subscribe(&stratum)
-					|| !stratum_authorize(&stratum, rpc_user, rpc_pass)) {
-				stratum_disconnect(&stratum);
-				if (opt_retries >= 0 && ++failures > opt_retries) {
-					applog(LOG_ERR, "...terminating workio thread");
-					tq_push(thr_info[work_thr_id].q, NULL);
-					goto out;
-				}
-				if (!opt_benchmark)
-					applog(LOG_ERR, "...retry after %d seconds", opt_fail_pause);
-				sleep(opt_fail_pause);
-			}
+      // Wait for new message from server
+      if ( likely( stratum_socket_full( &stratum, opt_timeout ) ) )
+      {
+         if ( likely( s = stratum_recv_line( &stratum ) ) )
+         {
+            stratum_down = false;
+            if ( likely( !stratum_handle_method( &stratum, s ) ) )
+               stratum_handle_response( s );
+            free( s );
+         }
+         else
+         {
+//            applog(LOG_WARNING, "Stratum connection interrupted");
+//            stratum_disconnect( &stratum );
+            stratum_need_reset = true;
+         }
+      }
+      else
+      {
+         applog(LOG_ERR, "Stratum connection timeout");
+         stratum_need_reset = true;
+//         stratum_disconnect( &stratum );
+      }
 
-			if (jsonrpc_2) {
-				work_free(&g_work);
-				work_copy(&g_work, &stratum.work);
-			}
-		}
+      report_summary_log( ( stratum_diff != stratum.job.diff )
+                       && ( stratum_diff != 0. ) );
 
-		if (stratum.job.job_id &&
-			(!g_work_time || strcmp(stratum.job.job_id, g_work.job_id)) )
-		{
-			pthread_mutex_lock(&g_work_lock);
-			stratum_gen_work(&stratum, &g_work);
-			time(&g_work_time);
-			pthread_mutex_unlock(&g_work_lock);
+      if ( !stratum_need_reset )
+      {
+         // Is keepalive needed? Mutex would normally be required but that
+         // would block any attempt to submit a share. A share is more
+         // important even if it messes up the keepalive.
 
-			if (stratum.job.clean || jsonrpc_2) {
-				static uint32_t last_block_height;
-				if (!opt_quiet && last_block_height != stratum.block_height) {
-					last_block_height = stratum.block_height;
-					if (net_diff > 0.)
-						applog(LOG_BLUE, "%s block %d, diff %.8f", algo_names[opt_algo],
-							stratum.block_height, net_diff);
-					else
-						applog(LOG_BLUE, "%s %s block %d", short_url, algo_names[opt_algo],
-							stratum.block_height);
-				}
-				restart_threads();
-					if (opt_showdiff && !opt_quiet) {
-						applog(LOG_INFO, CL_MAG "Got new work job: %s", g_work.job_id);
-						restart_threads();
-					} else if (!opt_showdiff && opt_quiet) {
-						restart_threads();
-					}
-				restart_threads();
-			} else if (opt_debug && !opt_quiet) {
-					applog(LOG_BLUE, "%s asks job %lu for block %d", short_url,
-						strtoul(stratum.job.job_id, NULL, 16), stratum.block_height);
-						restart_threads();
-			}
-		}
+         if ( opt_stratum_keepalive )
+         {
+            struct timeval now, et;
+            gettimeofday( &now, NULL );
+            // any shares submitted since last keepalive?
+            if ( last_submit_time.tv_sec > stratum_keepalive_timer.tv_sec )
+               memcpy( &stratum_keepalive_timer, &last_submit_time,
+                       sizeof (struct timeval) );
 
-		if (!stratum_socket_full(&stratum, opt_timeout)) {
-			applog(LOG_ERR, "Stratum connection timeout");
-			s = NULL;
-		} else
-			s = stratum_recv_line(&stratum);
-		if (!s) {
-			stratum_disconnect(&stratum);
-			applog(LOG_ERR, "Stratum connection interrupted");
-			continue;
-		}
-		if (!stratum_handle_method(&stratum, s))
-			stratum_handle_response(s);
-		free(s);
-	}
+            timeval_subtract( &et, &now, &stratum_keepalive_timer );
+
+            if ( et.tv_sec > stratum_keepalive_timeout )
+            {
+                double diff = stratum.job.diff * 0.5;
+                stratum_keepalive_timer = now;
+                if ( !opt_quiet )
+                   applog( LOG_BLUE,
+                           "Stratum keepalive requesting lower difficulty" );
+                stratum_suggest_difficulty( &stratum, diff );
+            }
+
+            if ( last_submit_time.tv_sec > stratum_reset_time.tv_sec )
+              timeval_subtract( &et, &now, &last_submit_time );
+            else
+              timeval_subtract( &et, &now, &stratum_reset_time );
+
+            if ( et.tv_sec > stratum_keepalive_timeout + 90 )
+            {
+               applog( LOG_NOTICE, "No shares submitted, resetting stratum connection" );
+               stratum_need_reset = true;
+               stratum_keepalive_timer = now;
+            }
+         } // stratum_keepalive
+
+         if ( stratum.new_job && !stratum_need_reset )
+            stratum_gen_work( &stratum, &g_work );
+
+      } // stratum_need_reset
+   }  // loop
 out:
-	return NULL;
+  return NULL;
 }
 
 static void show_credits()
@@ -2795,9 +2837,9 @@ static void show_credits()
         printf(CL_LGR"    #       #       #        #   #   #     # #  #      #  #\n");
         printf(CL_LGR"   #        #####  #        #  ###  #      ##  ###### #   ##\n");
 	     printf(CL_N"######################################################################\n\n");
-        printf(CL_N"             " CL_LYL2"** MULTI ALGO FOR MINING **"  CL_N"\n");
+        printf(CL_LYL2"                 ** MULTI ALGO FOR MINING **\n");
         printf("\n");
-        printf(CL_LCY"              **"PACKAGE_NAME""CL_LYL" "PACKAGE_VERSION CL_LCY" by zcdk077**\n");
+        printf(CL_LCY"              **"PACKAGE_NAME""CL_LYL"" PACKAGE_VERSION CL_LCY" by zcdk077**\n");
         printf(CL_LYL"   Based Originaly from cpuminer-multi by tpruvot and cpuminer-opt by JayDDee\n");
         printf(CL_N"######################################################################\n\n");
         printf(CL_LCY"  Author  "CL_LGR"           : "CL_LYL"zcdk077\n");
