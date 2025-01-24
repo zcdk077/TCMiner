@@ -16,7 +16,7 @@ Background:
 Verthash algorithm requires a data file for hashing. This file is
 static, portable, and only needs to be created once.
 
-A Verthash data file created by VerthashMiner can also be used by cpuminer-opt
+A Verthash data file created by VerthashMiner can also be used by TCMiner
 and used simultaneously by both miners.
 
 Due to its size >1GB it is recommened one data file be created and
@@ -25,7 +25,7 @@ stored in a permanent location accessible to any miner that wants to use it.
 New command line options:
 ------------------------
 
-cpuminer-opt adds two new command line options for verthash. The names
+TCMiner adds two new command line options for verthash. The names
 and some behaviour is changed from VerthashMiner.
 
 --data-file /path/to/verthash.dat
