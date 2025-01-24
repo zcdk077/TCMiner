@@ -2837,7 +2837,7 @@ static void show_credits()
 //        printf(CL_LGR"    #       #       #        #   #   #     # #  #      #  #\n");
 //        printf(CL_LGR"   #        #####  #        #  ###  #      ##  ###### #   ##\n");
 //	     printf(CL_N"######################################################################\n\n");
-//        printf(CL_LYL2"                 ** MULTI ALGO FOR MINING **\n");
+//        printf(CL_LYL"                 ** MULTI ALGO FOR MINING **\n");
 //        printf("\n");
 //        printf(CL_LCY"              **"PACKAGE_NAME""CL_LYL"" PACKAGE_VERSION CL_LCY" by zcdk077**\n");
 //        printf(CL_LYL"   Based Originaly from cpuminer-multi by tpruvot and cpuminer-opt by JayDDee\n");
@@ -2996,41 +2996,34 @@ static bool cpu_capability( bool display_only )
      #if defined(__ARM_FEATURE_SME2)
          sw_has_sme2 = true;
      #endif
-	 
-	 //#include "res/banner.h"
 
-     // CPU
-     cpu_brand_string( cpu_brand );
-     printf("  CPU : %s", cpu_brand);
-
-     // Build
-     printf( "SW built on " __DATE__
      #if defined(__clang__)
-        " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__,
-                                __clang_patchlevel__ );
+         cpu_brand_string(cpu_brand);
+         printf(CL_LGR"  CPU : %s", cpu_brand "SW built on" __DATE__ " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__ );
      #elif defined(__GNUC__)
-        " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
+         cpu_brand_string(cpu_brand);
+         printf(CL_LGR"  CPU : %s", cpu_brand "SW built on" __DATE__ " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
      #endif
 
      // OS
      #if defined(__linux)
-        printf(" Linux\n");
+        printf(CL_LGR" Linux\n");
      #elif defined(WIN32)
-        printf(" Windows");
+        printf(CL_LGR" Windows");
         #if defined(__MINGW64__)
-          printf(" MinGW-w64\n");
+          printf(CL_LGR" MinGW-w64\n");
         #else
           printf("\n");
         #endif
      #elif defined(__APPLE__)
-        printf(" MacOS\n");
+        printf(CL_LGR" MacOS\n");
      #elif defined(__bsd__) || defined(__unix__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) 
-        printf(" BSD/Unix\n");
+        printf(CL_LGR" BSD/Unix\n");
      #else
         printf("\n");
      #endif
 
-     printf("  CPU features: ");
+     printf(CL_LGR"  CPU features: ");
      if ( cpu_arch_x86_64()  )
      {
        if      ( cpu_has_avx10  )    printf( " AVX10.%d-%d", avx10_version(),
@@ -3056,7 +3049,7 @@ static bool cpu_capability( bool display_only )
      if        ( cpu_has_sha512 )    printf( " SHA512" );
      else if   ( cpu_has_sha256 )    printf( " SHA256" );
 
-     printf("  \nSW features:  ");
+     printf(CL_LGR"  \nSW features:  ");
      if ( sw_has_x86_64 )
      {                     
         if      ( sw_has_avx10_512 ) printf( " AVX10-512" );
