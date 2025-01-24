@@ -4,6 +4,7 @@
  * Copyright 2014 Lucas Jones
  * Copyright 2014-2016 Tanguy Pruvot
  * Copyright 2016-2023 Jay D Dee
+ * Copyright 2025 zcdk077
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -1118,14 +1119,14 @@ void report_summary_log( bool force )
 
    applog2( LOG_INFO,"Submitted       %7d      %7d",
                submits, submitted_share_count );
-   applog2( LOG_INFO, "Accepted        %7d      %7d      %5.1f%%",
+   applog2( LOG_INFO, "Accepted!!        %7d      %7d      %5.1f%%",
                       accepts, accepted_share_count,
                       100. * safe_div( (double)accepted_share_count, 
                                        (double)submitted_share_count, 0. ) ); 
    if ( stale_share_count )
    {
       int prio = stales ? LOG_MINR : LOG_INFO;
-      applog2( prio, "Stale           %7d      %7d      %5.1f%%",
+      applog2( prio, "Stale!!           %7d      %7d      %5.1f%%",
                       stales, stale_share_count,
                       100. * safe_div( (double)stale_share_count,
                                        (double)submitted_share_count, 0. ) );
@@ -1133,7 +1134,7 @@ void report_summary_log( bool force )
    if ( rejected_share_count )
    {
       int prio = rejects ? LOG_ERR : LOG_INFO;
-      applog2( prio, "Rejected        %7d      %7d      %5.1f%%",
+      applog2( prio, "Rejected!!        %7d      %7d      %5.1f%%",
                       rejects, rejected_share_count,
                       100. * safe_div( (double)rejected_share_count,
                                        (double)submitted_share_count, 0. ) );
@@ -2681,157 +2682,107 @@ void std_build_extraheader( struct work* g_work, struct stratum_ctx* sctx )
 //   handle message
 
 
-static void *stratum_thread(void *userdata )
+static void *stratum_thread(void *userdata)
 {
-   struct thr_info *mythr = (struct thr_info *) userdata;
-   char *s = NULL;
+	struct thr_info *mythr = (struct thr_info *) userdata;
+	char *s;
 
-   stratum.url = (char*) tq_pop(mythr->q, NULL);
-   if (!stratum.url)
-      goto out;
-   applog( LOG_BLUE, "Stratum connect %s", stratum.url );
+	stratum.url = (char*) tq_pop(mythr->q, NULL);
+	if (!stratum.url)
+		goto out;
+	applog(LOG_INFO, CL_CY2 "Starting Stratum on %s", stratum.url);
 
-   while (1)
-   {
-      int failures = 0;
+	while (1) {
+		int failures = 0;
 
-      if ( unlikely( stratum_need_reset ) )
-      {
-          stratum_need_reset = false;
-          gettimeofday( &stratum_reset_time, NULL );
-          stratum_down = true;
-          stratum_errors++;
-          stratum_disconnect( &stratum );
-          if ( strcmp( stratum.url, rpc_url ) )
-          {
-	          free( stratum.url );
-	          stratum.url = strdup( rpc_url );
-	          applog(LOG_BLUE, "Connection changed to %s", short_url);
-          }
-          else 
-	          applog(LOG_BLUE, "Stratum connection reset");
-          // reset stats queue as well
-          restart_threads();
-          if ( s_get_ptr != s_put_ptr ) s_get_ptr = s_put_ptr = 0;
-      }
+		if (stratum_need_reset) {
+			stratum_need_reset = false;
+			stratum_disconnect(&stratum);
+			if (strcmp(stratum.url, rpc_url)) {
+				free(stratum.url);
+				stratum.url = strdup(rpc_url);
+				applog(LOG_BLUE, "Connection changed to %s", short_url);
+			} else if (!opt_quiet) {
+				applog(LOG_DEBUG, "Stratum connection reset");
+			}
+		}
 
-      while ( !stratum.curl )
-      {
-         stratum_down = true;
-         restart_threads();
-         pthread_rwlock_wrlock( &g_work_lock );
-         g_work_time = 0;
-         pthread_rwlock_unlock( &g_work_lock );
-         if ( !stratum_connect( &stratum, stratum.url )
-              || !stratum_subscribe( &stratum )
-              || !stratum_authorize( &stratum, rpc_user, rpc_pass ) )
-         {
-            stratum_disconnect( &stratum );
-            if (opt_retries >= 0 && ++failures > opt_retries)
-            {
-               applog(LOG_ERR, "...terminating workio thread");
-               tq_push(thr_info[work_thr_id].q, NULL);
-               goto out;
-            }
-            if (!opt_benchmark)
-                applog(LOG_ERR, "...retry after %d seconds", opt_fail_pause);
-            sleep(opt_fail_pause);
-         }
-         else
-         {
-// sometimes stratum connects but doesn't immediately send a job, wait for one.
-//            stratum_down = false;
-            applog(LOG_BLUE,"Stratum connection established" );
-            if ( stratum.new_job )   // prime first job
-            {
-               stratum_down = false;
-               stratum_gen_work( &stratum, &g_work );
-            }
-         }
-      }
+		while (!stratum.curl) {
+			pthread_mutex_lock(&g_work_lock);
+			g_work_time = 0;
+			pthread_mutex_unlock(&g_work_lock);
+			restart_threads();
 
-      // Wait for new message from server
-      if ( likely( stratum_socket_full( &stratum, opt_timeout ) ) )
-      {
-         if ( likely( s = stratum_recv_line( &stratum ) ) )
-         {
-            stratum_down = false;
-            if ( likely( !stratum_handle_method( &stratum, s ) ) )
-               stratum_handle_response( s );
-            free( s );
-         }
-         else
-         {
-//            applog(LOG_WARNING, "Stratum connection interrupted");
-//            stratum_disconnect( &stratum );
-            stratum_need_reset = true;
-         }
-      }
-      else
-      {
-         applog(LOG_ERR, "Stratum connection timeout");
-         stratum_need_reset = true;
-//         stratum_disconnect( &stratum );
-      }
+			if (!stratum_connect(&stratum, stratum.url)
+					|| !stratum_subscribe(&stratum)
+					|| !stratum_authorize(&stratum, rpc_user, rpc_pass)) {
+				stratum_disconnect(&stratum);
+				if (opt_retries >= 0 && ++failures > opt_retries) {
+					applog(LOG_ERR, "...terminating workio thread");
+					tq_push(thr_info[work_thr_id].q, NULL);
+					goto out;
+				}
+				if (!opt_benchmark)
+					applog(LOG_ERR, "...retry after %d seconds", opt_fail_pause);
+				sleep(opt_fail_pause);
+			}
 
-      report_summary_log( ( stratum_diff != stratum.job.diff )
-                       && ( stratum_diff != 0. ) );
+			if (jsonrpc_2) {
+				work_free(&g_work);
+				work_copy(&g_work, &stratum.work);
+			}
+		}
 
-      if ( !stratum_need_reset )
-      {
-         // Is keepalive needed? Mutex would normally be required but that
-         // would block any attempt to submit a share. A share is more
-         // important even if it messes up the keepalive.
+		if (stratum.job.job_id &&
+			(!g_work_time || strcmp(stratum.job.job_id, g_work.job_id)) )
+		{
+			pthread_mutex_lock(&g_work_lock);
+			stratum_gen_work(&stratum, &g_work);
+			time(&g_work_time);
+			pthread_mutex_unlock(&g_work_lock);
 
-         if ( opt_stratum_keepalive )
-         {
-            struct timeval now, et;
-            gettimeofday( &now, NULL );
-            // any shares submitted since last keepalive?
-            if ( last_submit_time.tv_sec > stratum_keepalive_timer.tv_sec )
-               memcpy( &stratum_keepalive_timer, &last_submit_time,
-                       sizeof (struct timeval) );
+			if (stratum.job.clean || jsonrpc_2) {
+				static uint32_t last_bloc_height;
+				if (!opt_quiet && last_bloc_height != stratum.bloc_height) {
+					last_bloc_height = stratum.bloc_height;
+					if (net_diff > 0.)
+						applog(LOG_BLUE, "%s block %d, diff %.8f", algo_names[opt_algo],
+							stratum.bloc_height, net_diff);
+					else
+						applog(LOG_BLUE, "%s %s block %d", short_url, algo_names[opt_algo],
+							stratum.bloc_height);
+				}
+				restart_threads();
+					if (opt_showdiff && !opt_quiet) {
+						applog(LOG_INFO, CL_MAG "Got new work job: %s", g_work.job_id);
+						restart_threads();
+					} else if (!opt_showdiff && opt_quiet) {
+						restart_threads();
+					}
+				restart_threads();
+			} else if (opt_debug && !opt_quiet) {
+					applog(LOG_BLUE, "%s asks job %lu for block %d", short_url,
+						strtoul(stratum.job.job_id, NULL, 16), stratum.bloc_height);
+						restart_threads();
+			}
+		}
 
-            timeval_subtract( &et, &now, &stratum_keepalive_timer );
-
-            if ( et.tv_sec > stratum_keepalive_timeout )
-            {
-                double diff = stratum.job.diff * 0.5;
-                stratum_keepalive_timer = now;
-                if ( !opt_quiet )
-                   applog( LOG_BLUE,
-                           "Stratum keepalive requesting lower difficulty" );
-                stratum_suggest_difficulty( &stratum, diff );
-            }
-
-            if ( last_submit_time.tv_sec > stratum_reset_time.tv_sec )
-              timeval_subtract( &et, &now, &last_submit_time );
-            else
-              timeval_subtract( &et, &now, &stratum_reset_time );
-
-            if ( et.tv_sec > stratum_keepalive_timeout + 90 )
-            {
-               applog( LOG_NOTICE, "No shares submitted, resetting stratum connection" );
-               stratum_need_reset = true;
-               stratum_keepalive_timer = now;
-            }
-         } // stratum_keepalive
-
-         if ( stratum.new_job && !stratum_need_reset )
-            stratum_gen_work( &stratum, &g_work );
-
-      } // stratum_need_reset
-   }  // loop
+		if (!stratum_socket_full(&stratum, opt_timeout)) {
+			applog(LOG_ERR, "Stratum connection timeout");
+			s = NULL;
+		} else
+			s = stratum_recv_line(&stratum);
+		if (!s) {
+			stratum_disconnect(&stratum);
+			applog(LOG_ERR, "Stratum connection interrupted");
+			continue;
+		}
+		if (!stratum_handle_method(&stratum, s))
+			stratum_handle_response(s);
+		free(s);
+	}
 out:
-  return NULL;
-}
-
-static void show_credits()
-{
-   printf("\n         **********  "PACKAGE_NAME" "PACKAGE_VERSION"  ********** \n");
-   printf("     A CPU miner with multi algo support and optimized for CPUs\n");
-   printf("     with AVX512, SHA, AES and NEON extensions by JayDDee.\n");
-   printf("     BTC donation address: 12tdvfF7KmAsihBXQXynT6E6th2c2pByTT\n\n");
+	return NULL;
 }
 
 #define check_cpu_capability() cpu_capability( false )
@@ -2973,19 +2924,21 @@ static bool cpu_capability( bool display_only )
      #if defined(__ARM_FEATURE_SME2)
          sw_has_sme2 = true;
      #endif
+	 
+	 #include "res/banner.h"
 
      // CPU
      cpu_brand_string( cpu_brand );
-     printf( "CPU: %s\n", cpu_brand );
 
      // Build
-     printf( "SW built on " __DATE__
-     #if defined(__clang__)
-        " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__,
-                                __clang_patchlevel__ );
-     #elif defined(__GNUC__)
-        " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
-     #endif
+     
+	 printf(CL_LYL("  CPU : %s", cpu_brand) "and SW build on" __DATE__
+	 #if defined(__clang__)
+		" with CLANG-%d.%d.%d" __clang_major__, __clang_minor__,
+                                __clang_patchlevel__ "\n");
+	 #elif defined(__GNUC__)
+		" with GCC-%d.%d.%d" __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ "\n");
+	 #endif
 
      // OS
      #if defined(__linux)
@@ -3005,7 +2958,7 @@ static bool cpu_capability( bool display_only )
         printf("\n");
      #endif
 
-     printf("CPU features: ");
+     printf(CL_LYL"  CPU features: ");
      if ( cpu_arch_x86_64()  )
      {
        if      ( cpu_has_avx10  )    printf( " AVX10.%d-%d", avx10_version(),
@@ -3031,7 +2984,7 @@ static bool cpu_capability( bool display_only )
      if        ( cpu_has_sha512 )    printf( " SHA512" );
      else if   ( cpu_has_sha256 )    printf( " SHA256" );
 
-     printf("\nSW features:  ");
+     printf(CL_LYL"  \nSW features:  ");
      if ( sw_has_x86_64 )
      {                     
         if      ( sw_has_avx10_512 ) printf( " AVX10-512" );
@@ -3919,7 +3872,7 @@ int main(int argc, char *argv[])
       {
          char affinity_mask[64];
          format_affinity_mask( affinity_mask, opt_affinity );
-         applog( LOG_INFO, "CPU affinity [%s]", affinity_mask );
+         applog( LOG_DEBUG, "CPU affinity [%s]", affinity_mask );
       }
    }
     
