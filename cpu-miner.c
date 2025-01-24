@@ -173,7 +173,6 @@ struct timeval total_hashes_time = {0,0};
 double stratum_diff = 0.;
 double net_diff = 0.;
 double net_hashrate = 0.;
-uint64_t global_hashrate = 0;
 uint64_t net_blocks = 0;
 uint32_t opt_work_size = 0;
 bool     opt_bell = false;
@@ -1167,229 +1166,144 @@ void report_summary_log( bool force )
    }
 }
 
-// static int share_result( int result, struct work *work,
-//                          const char *reason )
-// {
-//    double share_time = 0.; 
-//    double hashrate = 0.;
-//    int latency = 0;
-//    struct share_stats_t my_stats = {0};
-//    struct timeval ack_time, latency_tv, et;
-//    char ares[48];
-//    char sres[48];
-//    char rres[48];
-//    char bres[48];
-//    bool solved = false; 
-//    bool stale = false;
-//    char *acol, *bcol, *scol, *rcol;
-//    acol = bcol = scol = rcol = "\0";
-
-//    pthread_mutex_lock( &stats_lock );
-
-//    if ( likely( share_stats[ s_get_ptr ].submit_time.tv_sec ) )
-//    {
-//       memcpy( &my_stats, &share_stats[ s_get_ptr], sizeof my_stats );
-//       memset( &share_stats[ s_get_ptr ], 0, sizeof my_stats );
-//       s_get_ptr = stats_ptr_incr( s_get_ptr );
-//       pthread_mutex_unlock( &stats_lock );
-//    }
-//    else
-//    {
-//       // empty queue, it must have overflowed and stats were lost for a share.
-//       pthread_mutex_unlock( &stats_lock );
-//       applog(LOG_WARNING,"Share stats not available.");
-//    }
-
-//    // calculate latency and share time.
-//    if likely( my_stats.submit_time.tv_sec )
-//    {
-//       gettimeofday( &ack_time, NULL );
-//       timeval_subtract( &latency_tv, &ack_time, &my_stats.submit_time );
-//       latency = ( latency_tv.tv_sec * 1e3  + latency_tv.tv_usec / 1e3 );
-//       timeval_subtract( &et, &my_stats.submit_time, &last_submit_time );
-//       share_time = (double)et.tv_sec + ( (double)et.tv_usec / 1e6 );
-//       memcpy( &last_submit_time, &my_stats.submit_time,
-//               sizeof last_submit_time );
-//    }
-
-//    // check result
-//    if ( likely( result ) )
-//    {
-//       accepted_share_count++;
-//       if ( ( my_stats.share_diff > 0. ) 
-//         && ( my_stats.share_diff < lowest_share ) )
-//          lowest_share = my_stats.share_diff;
-//       if ( my_stats.share_diff > highest_share )
-//          highest_share = my_stats.share_diff;
-//       sprintf( sres, "S%d", stale_share_count );
-//       sprintf( rres, "R%d", rejected_share_count );
-//       if unlikely( ( my_stats.net_diff > 0. )
-//                 && ( my_stats.share_diff >= my_stats.net_diff ) )
-//       {
-//          solved = true;
-//          solved_block_count++;
-//          sprintf( bres, "BLOCK SOLVED %d", solved_block_count );
-//          sprintf( ares, "A%d", accepted_share_count );
-//       }
-//       else
-//       {
-//          sprintf( CL_LCY"B%d", solved_block_count );
-//          sprintf( CL_LGR"Accepted!! "CL_N"["CL_LGR"%d"CL_N"]", accepted_share_count );
-//       }
-//    }
-//    else
-//    {
-//      sprintf( ares, "A%d", accepted_share_count );
-//      sprintf( bres, "B%d", solved_block_count );
-//      if ( reason )
-//         stale = strstr( reason, "job" );
-//      else if ( work )
-//         stale =  work->data[ algo_gate.ntime_index ]
-//              != g_work.data[ algo_gate.ntime_index ];
-//      if ( stale )
-//      {
-//         stale_share_count++;
-//         sprintf( sres, "Stale %d", stale_share_count );
-//         sprintf( rres, "R%d", rejected_share_count );
-//      }
-//      else
-//      {
-//         rejected_share_count++;
-//         sprintf( sres, "S%d", stale_share_count );
-//         sprintf( rres, "Rejected %d" , rejected_share_count );
-//      }
-//    }
-
-//    // update global counters for summary report
-//    pthread_mutex_lock( &stats_lock );
-
-//    for ( int i = 0; i < opt_n_threads; i++ )
-//        hashrate += thr_hashrates[i];
-//    global_hashrate = hashrate;
-   
-//    if ( likely( result ) )
-//    {
-//       accept_sum++;
-//       norm_diff_sum += my_stats.target_diff;
-//       if ( solved ) solved_sum++;
-//    }
-//    else
-//    {
-//       if ( stale )  stale_sum++;
-//       else          reject_sum++;
-//    }
-//    submit_sum++;
-
-//    pthread_mutex_unlock( &stats_lock );
-
-//    if ( use_colors )
-//    {
-//      bcol = acol = scol = rcol = CL_N;
-//      if ( likely( result ) )
-//      {
-//        acol = CL_LGR;       
-//        if ( unlikely( solved ) ) bcol = CL_LMA;
-//      }        
-//      else if ( stale ) scol = CL_YL2;
-//      else              rcol = CL_LRD;
-//    }
-
-//    const char *bell = !result && opt_bell ? &ASCII_BELL : "";
-//    applog( LOG_INFO, "%s%d %s%s %s%s %s%s %s%s%s, %.3f sec (%dms)",
-//            bell, my_stats.share_count, acol, ares, scol, sres, rcol, rres,
-//            bcol, bres, use_colors ? CL_N : "", share_time, latency );
-//    if ( unlikely( !( opt_quiet || result || stale ) ) )
-//    {
-//       applog2( LOG_INFO, "%sReject reason: %s", bell, reason ? reason : "" );
-//       applog2( LOG_INFO, "Share diff: %.5g, Target: %.5g",
-//                         my_stats.share_diff, my_stats.target_diff );
-//    }
-//    return 1;
-// }
-
-static int share_result(int result, struct work *work, const char *reason)
+static int share_result( int result, struct work *work,
+                         const char *reason )
 {
-   const char *flag;
-   char suppl[32] = {0};
-   char yes_pwr[32] = { 0 };
-	char s[345];
-	char hc[16];
-	char hr[16];
-   const char *sres;
-   double hashcount = 0.;
+   double share_time = 0.; 
    double hashrate = 0.;
-   char hc_units[4] = {0};
-	char hr_units[4] = {0};
-	uint32_t total_submits;
-	float rate;
-	char rate_s[8] = {0};
-   double sharediff = work ? work->sharediff : stratum.sharediff;
-   int i;
+   int latency = 0;
+   struct share_stats_t my_stats = {0};
+   struct timeval ack_time, latency_tv, et;
+   char ares[48];
+   char sres[48];
+   char rres[48];
+   char bres[48];
+   bool solved = false; 
+   bool stale = false;
+   char *acol, *bcol, *scol, *rcol;
+   acol = bcol = scol = rcol = "\0";
 
-   hashrate = 0;
    pthread_mutex_lock( &stats_lock );
-   for (i = 0; i < opt_n_threads; i++)
-                  hashrate += thr_hashrates[i];
-   result ? accepted_share_count++ : rejected_share_count++;
-   pthread_mutex_lock( &stats_lock );
 
-   global_hashrate = (uint64_t) hashrate;
-
-   if (!net_diff || sharediff < net_diff) {
-		flag = use_colors ?
-			(result ? CL_GRN YES : CL_RED BOO)
-		:	(result ? "(" YES ")" : "(" BOO ")");
-	} else {
-		solved_count++;
-		flag = use_colors ?
-			(result ? CL_GRN YAY : CL_RED BOO)
-		:	(result ? "(" YAY ")" : "(" BOO ")");
-	}
-
-   scale_hash_for_display ( &hashcount,  hc_units );
-	scale_hash_for_display ( &hashrate,  hr_units );
-;
-   if (hc_units[0])
+   if ( likely( share_stats[ s_get_ptr ].submit_time.tv_sec ) )
    {
-      sprintf(hc, "%.2f", hashcount);
-      if ( hashrate < 10)
-         sprintf(hr, "%.4f", hashrate );
-	   else
-	      sprintf(hr, "%.2f", hashrate );
+      memcpy( &my_stats, &share_stats[ s_get_ptr], sizeof my_stats );
+      memset( &share_stats[ s_get_ptr ], 0, sizeof my_stats );
+      s_get_ptr = stats_ptr_incr( s_get_ptr );
+      pthread_mutex_unlock( &stats_lock );
    }
    else
    {
-      sprintf(hc, "%.0f", hashcount );
-	   sprintf(hr, "%.2f", hashrate );
+      // empty queue, it must have overflowed and stats were lost for a share.
+      pthread_mutex_unlock( &stats_lock );
+      applog(LOG_WARNING,"Share stats not available.");
    }
-   if ( sharediff == 0 )
-	{
-	// no fractions of a hash
-	sprintf(hc, "%.0f", hashcount );
-	sprintf(hr, "%.2f", hashrate );
-	}
 
-   if (opt_showdiff)
-		sprintf(suppl, "diff %.8f", sharediff);
-	else // accepted percent
-		sprintf(suppl, "%.2f%%", 100. * accepted_share_count / (accepted_share_count + rejected_share_count));
+   // calculate latency and share time.
+   if likely( my_stats.submit_time.tv_sec )
+   {
+      gettimeofday( &ack_time, NULL );
+      timeval_subtract( &latency_tv, &ack_time, &my_stats.submit_time );
+      latency = ( latency_tv.tv_sec * 1e3  + latency_tv.tv_usec / 1e3 );
+      timeval_subtract( &et, &my_stats.submit_time, &last_submit_time );
+      share_time = (double)et.tv_sec + ( (double)et.tv_usec / 1e6 );
+      memcpy( &last_submit_time, &my_stats.submit_time,
+              sizeof last_submit_time );
+   }
 
-	switch (opt_algo) {
-	default:
-		applog(LOG_NOTICE, "%s" CL_WHT ": [%lu]:[" CL_RED "%lu" CL_WHT"] %s, %s %sH/s",
-			flag, accepted_share_count, rejected_share_count,
-			suppl, hr, hr_units);
-		break;
-	}
-   if (reason) {
-		applog(LOG_WARNING, "reject reason: %s", reason);
-		if (0 && strncmp(reason, "low difficulty share", 20) == 0) {
-		opt_diff_factor = (opt_diff_factor * 2.0) / 3.0;
-		applog(LOG_WARNING, "factor reduced to : %0.2f", opt_diff_factor);
-			return 0;
-		}
-	}
-	return 1;
+   // check result
+   if ( likely( result ) )
+   {
+      accepted_share_count++;
+      if ( ( my_stats.share_diff > 0. ) 
+        && ( my_stats.share_diff < lowest_share ) )
+         lowest_share = my_stats.share_diff;
+      if ( my_stats.share_diff > highest_share )
+         highest_share = my_stats.share_diff;
+      sprintf( sres, "S%d", stale_share_count );
+      sprintf( rres, "R%d", rejected_share_count );
+      if unlikely( ( my_stats.net_diff > 0. )
+                && ( my_stats.share_diff >= my_stats.net_diff ) )
+      {
+         solved = true;
+         solved_block_count++;
+         sprintf( bres, "BLOCK SOLVED %d", solved_block_count );
+         sprintf( ares, "A%d", accepted_share_count );
+      }
+      else
+      {
+         sprintf( CL_LCY"B%d", solved_block_count );
+         sprintf( CL_LGR"Accepted!! "CL_N"["CL_LGR"%d"CL_N"]", accepted_share_count );
+      }
+   }
+   else
+   {
+     sprintf( ares, "A%d", accepted_share_count );
+     sprintf( bres, "B%d", solved_block_count );
+     if ( reason )
+        stale = strstr( reason, "job" );
+     else if ( work )
+        stale =  work->data[ algo_gate.ntime_index ]
+             != g_work.data[ algo_gate.ntime_index ];
+     if ( stale )
+     {
+        stale_share_count++;
+        sprintf( sres, "Stale %d", stale_share_count );
+        sprintf( rres, "R%d", rejected_share_count );
+     }
+     else
+     {
+        rejected_share_count++;
+        sprintf( sres, "S%d", stale_share_count );
+        sprintf( rres, "Rejected %d" , rejected_share_count );
+     }
+   }
+
+   // update global counters for summary report
+   pthread_mutex_lock( &stats_lock );
+
+   for ( int i = 0; i < opt_n_threads; i++ )
+       hashrate += thr_hashrates[i];
+   global_hashrate = hashrate;
+   
+   if ( likely( result ) )
+   {
+      accept_sum++;
+      norm_diff_sum += my_stats.target_diff;
+      if ( solved ) solved_sum++;
+   }
+   else
+   {
+      if ( stale )  stale_sum++;
+      else          reject_sum++;
+   }
+   submit_sum++;
+
+   pthread_mutex_unlock( &stats_lock );
+
+   if ( use_colors )
+   {
+     bcol = acol = scol = rcol = CL_N;
+     if ( likely( result ) )
+     {
+       acol = CL_LGR;       
+       if ( unlikely( solved ) ) bcol = CL_LMA;
+     }        
+     else if ( stale ) scol = CL_YL2;
+     else              rcol = CL_LRD;
+   }
+
+   const char *bell = !result && opt_bell ? &ASCII_BELL : "";
+   applog( LOG_INFO, "%s%d %s%s %s%s %s%s %s%s%s, %.3f sec (%dms)",
+           bell, my_stats.share_count, acol, ares, scol, sres, rcol, rres,
+           bcol, bres, use_colors ? CL_N : "", share_time, latency );
+   if ( unlikely( !( opt_quiet || result || stale ) ) )
+   {
+      applog2( LOG_INFO, "%sReject reason: %s", bell, reason ? reason : "" );
+      applog2( LOG_INFO, "Share diff: %.5g, Target: %.5g",
+                        my_stats.share_diff, my_stats.target_diff );
+   }
+   return 1;
 }
 
 static const char *json_submit_req =
