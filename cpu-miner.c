@@ -1074,9 +1074,12 @@ void report_summary_log( bool force )
         char lghr_units[4] = {0};
         scale_hash_for_display( &lost_shrate, lshr_units );
         scale_hash_for_display( &lost_ghrate, lghr_units );
-        applog2( LOG_INFO, "Lost hash rate  %7.2f%sh/s    %7.2f%sh/s", lost_shrate, lshr_units, lost_ghrate, lghr_units );
+        applog2( LOG_INFO,CL_LRD"Lost hash rate  %7.2f%sh/s    %7.2f%sh/s", lost_shrate, lshr_units, lost_ghrate, lghr_units );
         applog2( LOG_INFO,CL_LGR"Submitted       %7d      %7d", submits, submitted_share_count );
-        applog2( LOG_INFO,CL_LGR"Accepted        %7d      %7d      %5.1f%%", accepts, accepted_share_count, 100. * safe_div( (double)accepted_share_count, (double)submitted_share_count, 0. ) ); 
+        applog2( LOG_INFO,CL_LGR"Accepted        %7d      %7d      %5.1f%%",
+                      accepts, accepted_share_count,
+                      100. * safe_div( (double)accepted_share_count, 
+                                       (double)submitted_share_count, 0. ) ); 
     }
     if ( stale_share_count )
     {
@@ -1091,10 +1094,10 @@ void report_summary_log( bool force )
     if ( solved_block_count )
     {      
         int prio = solved ? LOG_PINK : LOG_INFO;
-        applog2( prio,CL_LCY"Blocks Solved   %7d      %7d", solved, solved_block_count );
+        applog2( prio, "Blocks Solved   %7d      %7d", solved, solved_block_count );
     }
     if ( stratum_errors )
-        applog2( LOG_INFO, "Stratum resets               %7d", stratum_errors );
+        applog2( LOG_INFO,CL_LBL"Stratum resets               %7d", stratum_errors );
         applog2( LOG_INFO,CL_LBL"Hi/Lo Share Diff  %.5g /  %.5g", highest_share, lowest_share );
 
         int mismatch = submitted_share_count - ( accepted_share_count + stale_share_count + rejected_share_count );
@@ -1242,11 +1245,11 @@ static int share_result( int result, struct work *work, const char *reason )
     }
 
     const char *bell = !result && opt_bell ? &ASCII_BELL : "";
-    applog( LOG_INFO, "%s%d %s%s %s%s %s%s %s%s%s, %.3f sec (%dms)", bell, my_stats.share_count, acol, ares, scol, sres, rcol, rres, bcol, bres, use_colors ? CL_N : "", share_time, latency );
+    applog( LOG_NOTICE, "%s%d %s%s %s%s %s%s %s%s%s, %.3f sec (%dms)", bell, my_stats.share_count, acol, ares, scol, sres, rcol, rres, bcol, bres, use_colors ? CL_N : "", share_time, latency );
     if ( unlikely( !( opt_quiet || result || stale ) ) )
     {
-        applog2( LOG_INFO, "%sReject reason: %s", bell, reason ? reason : "" );
-        applog2( LOG_INFO, "Share diff: %.5g, Target: %.5g", my_stats.share_diff, my_stats.target_diff );
+        applog2( LOG_BLUE, "%sReject reason: %s", bell, reason ? reason : "" );
+        applog2( LOG_BLUE, "Share diff: %.5g, Target: %.5g", my_stats.share_diff, my_stats.target_diff );
     }
     return 1;
 }
@@ -2673,34 +2676,7 @@ out:
     return NULL;
 }
 
-static void show_credits()
-{
-    printf(CL_LCY"   ###########   #####   ##      ##  ###  ##      #  #####   #### \n");
-    printf(CL_LCY"        #       #       # #    # #   #   # #     #  #      #    #\n");
-    printf(CL_LCY"       #       #       #  #  #  #   #   #  #    #  #      #    #\n");
-    printf(CL_LCY"      #       #       #   ##   #   #   #   #   #  #####  #####\n");
-    printf(CL_LCY"     #       #       #        #   #   #    #  #  #      # #    #  # ##\n");
-    printf(CL_LCY"    #       #       #        #   #   #     # #  #      #  #   # #   #\n");
-    printf(CL_LCY"   #        #####  #        #  ###  #      ##  ###### #   ## ## # ###\n");
-    printf(CL_N"######################################################################\n\n");
-    printf(CL_RED"                     ** MULTI ALGO FOR MINING **\n");
-    printf("\n");
-    printf(CL_LCY"                     ** "PACKAGE_NAME" " CL_YLW"" PACKAGE_VERSION"" CL_LCY" by zcdk077 **\n");
-    printf(CL_YLW"                 Based Originaly by tpruvot and JayDDee\n");
-    printf(CL_N"######################################################################\n");
-    printf(CL_LCY"     Author  "CL_LGR"           : "CL_YLW"zcdk077\n");
-    printf(CL_LCY"     Git repo"CL_LGR"           : "CL_YLW"https:" "/" "/" "github.com" "/" "zcdk077" "/" "TCMiner\n");
-    printf(CL_LCY"     Original git repo"CL_LGR"  : "CL_YLW"https:" "/" "/" "github.com" "/" "tpruvot" "/" "cpuminer-multi\n");
-    printf(CL_LCY"     Original git repo"CL_LGR"  : "CL_YLW"https:" "/" "/" "github.com" "/" "JayDDee" "/" "cpuminer-opt\n\n");
-    printf(CL_N"########################## "CL_LCY"Donation zcdk077"CL_N" ##########################\n");
-    printf(CL_LCY"    DGB donation addr"CL_LGR"  : "CL_YLW"DRz9CYkQDmtUZUCT3YHR4i5giwhBcAAdva\n");
-    printf(CL_LCY"    MBC donation addr"CL_LGR"  : "CL_YLW"mbc1qk3fej00mkksw9g4496ftm98dyg4m0ftegje6r8\n");
-    printf(CL_LCY"   VRSC donation addr"CL_LGR"  : "CL_YLW"RGdgdAU7xB3vEwSfhPYGJJY9R85iAvhVtS\n\n");
-    printf(CL_N"############################## "CL_LCY"Donation"CL_N" ##############################\n");
-    printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_YLW"1FhDPLPpw18X4srecguG3MxJYe4a1JsZnd ( tpruvot )\n");
-    printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_YLW"12tdvfF7KmAsihBXQXynT6E6th2c2pByTT ( JayDDee )\n");
-    printf(CL_N"######################################################################\n\n");
-}
+#include "res/banner.h";
 
 #define check_cpu_capability() cpu_capability( false )
 #define display_cpu_capability() cpu_capability( true )
