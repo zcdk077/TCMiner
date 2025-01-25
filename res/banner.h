@@ -24,5 +24,5 @@ static void show_credits()
     printf(CL_N"############################## "CL_LCY"Donation"CL_N" ##############################\n");
     printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_YLW"1FhDPLPpw18X4srecguG3MxJYe4a1JsZnd ( tpruvot )\n");
     printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_YLW"12tdvfF7KmAsihBXQXynT6E6th2c2pByTT ( JayDDee )\n");
-    printf(CL_N"######################################################################\n\n");
+    printf(CL_N"######################################################################\n");
 }
