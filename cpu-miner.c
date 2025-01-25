@@ -1006,7 +1006,7 @@ void report_summary_log( bool force )
             else
                 sprintf( tempstr, "%d C", curr_temp );
 
-            applog( LOG_NOTICE,CL_LCY"CPU temp :"CL_LRD"[%s]"CL_N" , "CL_YLW"Freq :"CL_LGR" [%.3f]"CL_N"/"CL_LGR"[%.3f] "CL_YLW"GHz", tempstr, hi_temp, lo_freq / 1e6, hi_freq / 1e6 );
+            applog( LOG_NOTICE,CL_LCY"CPU temp :"CL_LRD"[%s]"CL_N", "CL_YLW"Freq :"CL_LGR" [%.3f]"CL_N"/"CL_LGR"[%.3f] "CL_YLW"GHz", tempstr, hi_temp, lo_freq / 1e6, hi_freq / 1e6 );
             if ( curr_temp > hi_temp ) hi_temp = curr_temp;
             if ( ( opt_max_temp > 0.0 ) && ( curr_temp > opt_max_temp ) )
                 restart_threads();
@@ -1154,30 +1154,31 @@ static int share_result( int result, struct work *work, const char *reason )
     // check result
     if ( likely( result ) )
     {
+        scale_hash_for_display ( &hr, hr_units );
         accepted_share_count++;
         if ( ( my_stats.share_diff > 0. ) && ( my_stats.share_diff < lowest_share ) )
             lowest_share = my_stats.share_diff;
         if ( my_stats.share_diff > highest_share )
             highest_share = my_stats.share_diff;
-            sprintf( sres, "S%d", stale_share_count );
-            sprintf( rres, "R%d", rejected_share_count );
+            sprintf( sres, CL_YLW"|| "CL_RED"stale "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", stale_share_count );
+            sprintf( rres, CL_YLW"|| "CL_RED"rejected "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", rejected_share_count );
         if unlikely( ( my_stats.net_diff > 0. ) && ( my_stats.share_diff >= my_stats.net_diff ) )
         {
             solved = true;
             solved_block_count++;
-            sprintf( bres, "BLOCK SOLVED %d", solved_block_count );
-            sprintf( ares, "A%d", accepted_share_count );
+            sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
+            sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" || ", accepted_share_count );
         }
         else
         {
-            sprintf( bres, "B%d", solved_block_count );
-            sprintf( ares, CL_YLW"|| "CL_GRN"Accepted!! "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" ||", accepted_share_count );
+            sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
+            sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" || %.2f %sh/s ||", hr, hr_units, accepted_share_count );
         }
     }
     else
     {
-        sprintf( ares, "A%d", accepted_share_count );
-        sprintf( bres, "B%d", solved_block_count );
+        sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" ||", accepted_share_count );
+        sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
         if ( reason )
             stale = strstr( reason, "job" );
         else if ( work )
@@ -1185,14 +1186,14 @@ static int share_result( int result, struct work *work, const char *reason )
         if ( stale )
         {
             stale_share_count++;
-            sprintf( sres, "Stale %d", stale_share_count );
-            sprintf( rres, "R%d", rejected_share_count );
+            sprintf( sres, CL_YLW"|| "CL_RED"stale "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", stale_share_count );
+            sprintf( rres, CL_YLW"|| "CL_RED"rejected "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", rejected_share_count );
         }
         else
         {
             rejected_share_count++;
-            sprintf( sres, "S%d", stale_share_count );
-            sprintf( rres, "Rejected %d" , rejected_share_count );
+            sprintf( sres, CL_YLW"|| "CL_RED"stale "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", stale_share_count );
+            sprintf( rres, CL_YLW"|| "CL_RED"rejected "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", rejected_share_count );
         }
     }
 
@@ -1220,7 +1221,7 @@ static int share_result( int result, struct work *work, const char *reason )
 
     if ( use_colors )
     {
-        bcol = acol = scol = rcol = CL_N;
+        bcol = acol = scol = rcol = CL_CYN;
         if ( likely( result ) )
         {
         acol = CL_LGR;       
@@ -1930,11 +1931,11 @@ static void stratum_gen_work( struct stratum_ctx *sctx, struct work *g_work )
     pthread_mutex_unlock( &stats_lock );
 
     if ( stratum_diff != sctx->job.diff )
-        applog( LOG_WARNING, "New stratum difficulty %g (%.5g)", sctx->job.diff, sctx->block_height, sctx->job.merkle_count, g_work->job_id );
+        applog( LOG_WARNING, "New stratum difficulty %g (%.5g)", sctx->job.diff, net_diff );
     else if ( last_block_height != sctx->block_height )
-        applog( LOG_BLUE, "New Block %d, Tx %d, Netdiff %.5g, Job %s", sctx->block_height, sctx->job.merkle_count, net_diff, g_work->job_id );
+        applog( LOG_BLUE, "%s block %d, diff %.5g", algo_names[opt_algo], sctx->block_height, net_diff );
     else if ( g_work->job_id && new_job )
-        applog( LOG_BLUE, "New Work: Block %d, Tx %d, Netdiff %.5g, Job %s", sctx->block_height, sctx->job.merkle_count, net_diff, g_work->job_id );
+        applog( LOG_INFO, "Got new work job %s", g_work->job_id );
     else if ( opt_debug )
     {
         unsigned char *xnonce2str = bebin2hex( g_work->xnonce2, g_work->xnonce2_len );
@@ -2668,27 +2669,27 @@ static void show_credits()
     printf(CL_LCY"        #       #       # #    # #   #   # #     #  #      #    #\n");
     printf(CL_LCY"       #       #       #  #  #  #   #   #  #    #  #      #    #\n");
     printf(CL_LCY"      #       #       #   ##   #   #   #   #   #  #####  #####\n");
-    printf(CL_LCY"     #       #       #        #   #   #    #  #  #      # #\n");
-    printf(CL_LCY"    #       #       #        #   #   #     # #  #      #  #\n");
-    printf(CL_LCY"   #        #####  #        #  ###  #      ##  ###### #   ##\n");
+    printf(CL_LCY"     #       #       #        #   #   #    #  #  #      # #    #  # ##\n");
+    printf(CL_LCY"    #       #       #        #   #   #     # #  #      #  #   # #   #\n");
+    printf(CL_LCY"   #        #####  #        #  ###  #      ##  ###### #   ## ## # ###\n");
     printf(CL_N"######################################################################\n\n");
-    printf(CL_GRN"                        ** MULTI ALGO FOR MINING **\n");
+    printf(CL_RED"                     ** MULTI ALGO FOR MINING **\n");
     printf("\n");
     printf(CL_LCY"                     ** "PACKAGE_NAME" " CL_YLW"" PACKAGE_VERSION"" CL_LCY" by zcdk077 **\n");
     printf(CL_YLW"                 Based Originaly by tpruvot and JayDDee\n");
     printf(CL_N"######################################################################\n");
-    printf(CL_LCY"  Author  "CL_LGR"           : "CL_YLW"zcdk077\n");
-    printf(CL_LCY"  Git repo"CL_LGR"           : "CL_YLW"https:" "/" "/" "github.com" "/" "zcdk077" "/" "TCMiner\n");
-    printf(CL_LCY"  Original git repo"CL_LGR"  : "CL_YLW"https:" "/" "/" "github.com" "/" "tpruvot" "/" "cpuminer-multi\n");
-    printf(CL_LCY"  Original git repo"CL_LGR"  : "CL_YLW"https:" "/" "/" "github.com" "/" "JayDDee" "/" "cpuminer-opt\n\n");
+    printf(CL_LCY"     Author  "CL_LGR"           : "CL_YLW"zcdk077\n");
+    printf(CL_LCY"     Git repo"CL_LGR"           : "CL_YLW"https:" "/" "/" "github.com" "/" "zcdk077" "/" "TCMiner\n");
+    printf(CL_LCY"     Original git repo"CL_LGR"  : "CL_YLW"https:" "/" "/" "github.com" "/" "tpruvot" "/" "cpuminer-multi\n");
+    printf(CL_LCY"     Original git repo"CL_LGR"  : "CL_YLW"https:" "/" "/" "github.com" "/" "JayDDee" "/" "cpuminer-opt\n\n");
     printf(CL_N"########################## "CL_LCY"Donation zcdk077"CL_N" ##########################\n");
-    printf(CL_LCY"  DGB donation addr"CL_LGR"  : "CL_YLW"DRz9CYkQDmtUZUCT3YHR4i5giwhBcAAdva\n");
-    printf(CL_LCY"  MBC donation addr"CL_LGR"  : "CL_YLW"mbc1qk3fej00mkksw9g4496ftm98dyg4m0ftegje6r8\n");
-    printf(CL_LCY" VRSC donation addr"CL_LGR"  : "CL_YLW"RGdgdAU7xB3vEwSfhPYGJJY9R85iAvhVtS\n\n");
+    printf(CL_LCY"    DGB donation addr"CL_LGR"  : "CL_YLW"DRz9CYkQDmtUZUCT3YHR4i5giwhBcAAdva\n");
+    printf(CL_LCY"    MBC donation addr"CL_LGR"  : "CL_YLW"mbc1qk3fej00mkksw9g4496ftm98dyg4m0ftegje6r8\n");
+    printf(CL_LCY"   VRSC donation addr"CL_LGR"  : "CL_YLW"RGdgdAU7xB3vEwSfhPYGJJY9R85iAvhVtS\n\n");
     printf(CL_N"############################## "CL_LCY"Donation"CL_N" ##############################\n");
     printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_YLW"1FhDPLPpw18X4srecguG3MxJYe4a1JsZnd ( tpruvot )\n");
     printf(CL_LCY"  BTC donation addr "CL_LGR" : "CL_YLW"12tdvfF7KmAsihBXQXynT6E6th2c2pByTT ( JayDDee )\n");
-    printf(CL_N"######################################################################\n");
+    printf(CL_N"######################################################################\n\n");
 }
 
 #define check_cpu_capability() cpu_capability( false )
@@ -2834,56 +2835,56 @@ static bool cpu_capability( bool display_only )
 
     #if defined(__clang__)
         cpu_brand_string(cpu_brand);
-        printf(CL_LGR"  CPU : %s", cpu_brand ); printf(CL_LGR"|| SW built on" __DATE__ " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__ );
+        printf(CL_LGR"%s", cpu_brand ); printf(CL_LGR" || SW built on " __DATE__ " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__ );
     #elif defined(__GNUC__)
         cpu_brand_string(cpu_brand);
-        printf(CL_LGR"  CPU : %s", cpu_brand ); printf(CL_LGR"|| SW built on" __DATE__ " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
+        printf(CL_LGR"%s", cpu_brand ); printf(CL_LGR" || SW built on " __DATE__ " with GCC-%d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
     #endif
 
     // OS
     #if defined(__linux)
-        printf(CL_LGR"|| Linux\n");
+        printf(CL_LGR" || Linux\n");
     #elif defined(WIN32)
-        printf(CL_LGR"|| Windows");
+        printf(CL_LGR" || Windows");
         #if defined(__MINGW64__)
             printf(CL_LGR"|| MinGW-w64\n");
         #else
             printf("\n");
         #endif
     #elif defined(__APPLE__)
-        printf(CL_LGR"|| MacOS\n");
+        printf(CL_LGR" || MacOS\n");
     #elif defined(__bsd__) || defined(__unix__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) 
-        printf(CL_LGR"|| BSD/Unix\n");
+        printf(CL_LGR" || BSD/Unix\n");
     #else
         printf("\n");
     #endif
 
-    printf(CL_LGR"  CPU features : ");
+    printf(CL_LGR"  CPU features      :");
     if ( cpu_arch_x86_64()  )
     {
-        if      ( cpu_has_avx10  )    printf( " AVX10.%d-%d", avx10_version(), avx10_vector_length() );
-        if      ( cpu_has_avx512 )    printf( " AVX512" );
-        else if ( cpu_has_avx2   )    printf( " AVX2  " );
-        else if ( cpu_has_avx    )    printf( " AVX   " );
-        else if ( cpu_has_sse42  )    printf( " SSE4.2" );
-        else if ( cpu_has_sse41  )    printf( " SSE4.1" );
-        else if ( cpu_has_ssse3  )    printf( " SSSE3 " );
-        else if ( cpu_has_sse2   )    printf( " SSE2  " );
+        if      ( cpu_has_avx10  )    printf( "     AVX10.%d-%d", avx10_version(), avx10_vector_length() );
+        if      ( cpu_has_avx512 )    printf( "     AVX512" );
+        else if ( cpu_has_avx2   )    printf( "     AVX2  " );
+        else if ( cpu_has_avx    )    printf( "     AVX   " );
+        else if ( cpu_has_sse42  )    printf( "     SSE4.2" );
+        else if ( cpu_has_sse41  )    printf( "     SSE4.1" );
+        else if ( cpu_has_ssse3  )    printf( "     SSSE3 " );
+        else if ( cpu_has_sse2   )    printf( "     SSE2  " );
     }
     else if   ( cpu_arch_aarch64() )
     {
-        if      ( cpu_has_neon   )    printf( "       NEON" );
-        if      ( cpu_has_sve2   )    printf( " SVE2-%d", sve_vector_length() );
-        else if ( cpu_has_sve    )    printf( " SVE"    );
-        if      ( cpu_has_sme2   )    printf( " SME2"   );
-        else if ( cpu_has_sme    )    printf( " SME"    );
+        if      ( cpu_has_neon   )    printf( "     NEON" );
+        if      ( cpu_has_sve2   )    printf( "     SVE2-%d", sve_vector_length() );
+        else if ( cpu_has_sve    )    printf( "     SVE"    );
+        if      ( cpu_has_sme2   )    printf( "     SME2"   );
+        else if ( cpu_has_sme    )    printf( "     SME"    );
     }     
     if        ( cpu_has_vaes   )    printf( " VAES"   );
-    else if   ( cpu_has_aes    )    printf( "  AES"   );
+    else if   ( cpu_has_aes    )    printf( " AES"   );
     if        ( cpu_has_sha512 )    printf( " SHA512" );
     else if   ( cpu_has_sha256 )    printf( " SHA256" );
 
-    printf(CL_LGR"\n  SW features :         ");
+    printf(CL_LGR"\n  SW features       :");
     if ( sw_has_x86_64 )
     {                     
         if      ( sw_has_avx10_512 ) printf( " AVX10-512" );
@@ -2910,7 +2911,7 @@ static bool cpu_capability( bool display_only )
     if         ( sw_has_sha512  )   printf( " SHA512" );
     else if    ( sw_has_sha256  )   printf( " SHA256" );
 
-    printf("\n"CL_N);
+    printf(CL_N"######################################################################\n"CL_N);
 
     /*     
     if ( !display_only )
