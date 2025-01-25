@@ -1177,9 +1177,37 @@ static int share_result( int result, struct work *work, const char *reason )
         }
         else
         {
+            double miner_hr = 0.;
+            double net_hr = net_hashrate;
+            double nd = net_diff * exp32;
+            char net_hr_units[4] = {0};
+            char miner_hr_units[4] = {0};
+            char net_ttf[32];
+            char miner_ttf[32];
+
+            pthread_mutex_lock( &stats_lock );
+
+            for ( int i = 0; i < opt_n_threads; i++ )
+               miner_hr += thr_hashrates[i];
+            global_hashrate = miner_hr;
+
+            pthread_mutex_unlock( &stats_lock );
+
+            if ( net_hr > 0. )
+               sprintf_et( net_ttf, nd / net_hr );
+            else
+               sprintf( net_ttf, "NA" );
+            if ( miner_hr > 0. )
+               sprintf_et( miner_ttf, nd / miner_hr );
+            else
+               sprintf( miner_ttf, "NA" );
+
+            scale_hash_for_display ( &miner_hr, miner_hr_units );
+            scale_hash_for_display ( &net_hr, net_hr_units );
             sprintf( bres, "B%d", solved_block_count );
             // sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
-            sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" ||", accepted_share_count );
+            sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" || %.2f %sh/s %s ||", miner_hr, miner_hr_units, miner_ttf, net_hr,
+                  net_hr_units, net_ttf, accepted_share_count );
         }
     }
     else
@@ -1952,7 +1980,7 @@ static void stratum_gen_work( struct stratum_ctx *sctx, struct work *g_work )
     else if ( opt_debug )
     {
         unsigned char *xnonce2str = bebin2hex( g_work->xnonce2, g_work->xnonce2_len );
-        applog( LOG_PINK, "Extranonce2 0x%s, Block %d, Job %s", xnonce2str, sctx->block_height, g_work->job_id );
+        applog( LOG_NOTICE, "Extranonce2 0x%s, Block %d, Job %s", xnonce2str, sctx->block_height, g_work->job_id );
         free( xnonce2str );
     }
 
