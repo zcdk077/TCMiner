@@ -1075,12 +1075,11 @@ void report_summary_log( bool force )
         scale_hash_for_display( &lost_shrate, lshr_units );
         scale_hash_for_display( &lost_ghrate, lghr_units );
         applog2( LOG_INFO,CL_LRD"Lost hash rate  %7.2f%sh/s    %7.2f%sh/s", lost_shrate, lshr_units, lost_ghrate, lghr_units );
-        applog2( LOG_INFO,CL_LGR"Submitted       %7d      %7d", submits, submitted_share_count );
-        applog2( LOG_INFO,CL_LGR"Accepted        %7d      %7d      %5.1f%%",
-                      accepts, accepted_share_count,
-                      100. * safe_div( (double)accepted_share_count, 
-                                       (double)submitted_share_count, 0. ) ); 
     }
+
+    applog2( LOG_INFO,CL_LGR"Submitted       %7d      %7d", submits, submitted_share_count );
+    applog2( LOG_INFO,CL_LGR"Accepted        %7d      %7d      %5.1f%%", accepts, accepted_share_count, 100. * safe_div( (double)accepted_share_count, (double)submitted_share_count, 0. ) ); 
+
     if ( stale_share_count )
     {
         int prio = stales ? LOG_MINR : LOG_INFO;
@@ -1162,32 +1161,25 @@ static int share_result( int result, struct work *work, const char *reason )
             lowest_share = my_stats.share_diff;
         if ( my_stats.share_diff > highest_share )
             highest_share = my_stats.share_diff;
-            sprintf( sres, "S%d", stale_share_count );
-            sprintf( rres, "R%d", rejected_share_count );
-            // sprintf( sres, CL_YLW"|| "CL_RED"stale "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", stale_share_count );
-            // sprintf( rres, CL_YLW"|| "CL_RED"rejected "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", rejected_share_count );
+            sprintf( sres, "[S%d]", stale_share_count );
+            sprintf( rres, "[R%d]", rejected_share_count );
         if unlikely( ( my_stats.net_diff > 0. ) && ( my_stats.share_diff >= my_stats.net_diff ) )
         {
             solved = true;
             solved_block_count++;
-            sprintf( bres, "block solved %d", solved_block_count );
-            sprintf( ares, "A%d", accepted_share_count );
-            // sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
-            // sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" || ", accepted_share_count );
+            sprintf( bres, CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
+            sprintf( ares, CL_GRN"A%d", accepted_share_count );
         }
         else
         {
-            sprintf( bres, "B%d", solved_block_count );
-            // sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
+            sprintf( bres, CL_MAG"[B%d]", solved_block_count );
             sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" ||",  accepted_share_count );
         }
     }
     else
     {
-        sprintf( ares, "A%d", accepted_share_count );
-        sprintf( bres, "B%d", solved_block_count );
-        // sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" ||", accepted_share_count );
-        // sprintf( bres, CL_YLW"|| "CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
+        sprintf( ares, CL_GRN"[A%d]", accepted_share_count );
+        sprintf( bres, CL_MAG"[B%d]", solved_block_count );
         if ( reason )
             stale = strstr( reason, "job" );
         else if ( work )
@@ -1195,18 +1187,14 @@ static int share_result( int result, struct work *work, const char *reason )
         if ( stale )
         {
             stale_share_count++;
-            sprintf( sres, "stale %d", stale_share_count );
-            sprintf( rres, "R%d", rejected_share_count );
-            // sprintf( sres, CL_YLW"|| "CL_RED"stale "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", stale_share_count );
-            // sprintf( rres, CL_YLW"|| "CL_RED"rejected "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", rejected_share_count );
+            sprintf( sres, CL_YL2"stale [%d]", stale_share_count );
+            sprintf( rres, "[R%d]", rejected_share_count );
         }
         else
         {
             rejected_share_count++;
-            sprintf( sres, "S%d", stale_share_count );
+            sprintf( sres, "[S%d]", stale_share_count );
             sprintf( rres, "rejected %d" , rejected_share_count );
-            // sprintf( sres, CL_YLW"|| "CL_RED"stale "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", stale_share_count );
-            // sprintf( rres, CL_YLW"|| "CL_RED"rejected "CL_N"["CL_RED"%d"CL_N"]"CL_YLW" ||", rejected_share_count );
         }
     }
 
@@ -1245,7 +1233,7 @@ static int share_result( int result, struct work *work, const char *reason )
     }
 
     const char *bell = !result && opt_bell ? &ASCII_BELL : "";
-    applog( LOG_NOTICE, "%s%d %s%s %s%s %s%s %s%s%s, %.3f sec (%dms)", bell, my_stats.share_count, acol, ares, scol, sres, rcol, rres, bcol, bres, use_colors ? CL_N : "", share_time, latency );
+    applog( LOG_NOTICE, "%s%d %s%s %s%s %s%s %s%s%s, %.3f sec (%dms)", bell, my_stats.share_count, acol, ares, scol, sres, rcol, rres, bcol, bres, use_colors ? CL_BLU : "", share_time, latency );
     if ( unlikely( !( opt_quiet || result || stale ) ) )
     {
         applog2( LOG_BLUE, "%sReject reason: %s", bell, reason ? reason : "" );
@@ -2846,7 +2834,7 @@ static bool cpu_capability( bool display_only )
     #if defined(__ARM_FEATURE_SME2)
         sw_has_sme2 = true;
     #endif
-
+/*
     #if defined(__clang__)
         cpu_brand_string(cpu_brand);
         printf(CL_LGR"  %s", cpu_brand ); printf(CL_LGR" || SW built on " __DATE__ " with CLANG-%d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__ );
@@ -2927,7 +2915,7 @@ static bool cpu_capability( bool display_only )
 
     printf(CL_N"\n");
     printf(CL_N"######################################################################\n"CL_N);
-
+*/
     /*     
     if ( !display_only )
     {
