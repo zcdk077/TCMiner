@@ -1161,25 +1161,25 @@ static int share_result( int result, struct work *work, const char *reason )
             lowest_share = my_stats.share_diff;
         if ( my_stats.share_diff > highest_share )
             highest_share = my_stats.share_diff;
-            sprintf( sres, "[S%d]", stale_share_count );
-            sprintf( rres, "[R%d]", rejected_share_count );
+            sprintf( sres, CL_N"["CL_YL2"S%d"CL_N"]", stale_share_count );
+            sprintf( rres, CL_N"["CL_LRD"R%d"CL_N"]", rejected_share_count );
         if unlikely( ( my_stats.net_diff > 0. ) && ( my_stats.share_diff >= my_stats.net_diff ) )
         {
             solved = true;
             solved_block_count++;
-            sprintf( bres, CL_MAG"block solved "CL_N"["CL_MAG"%d"CL_N"]"CL_YLW" ||", solved_block_count );
-            sprintf( ares, CL_GRN"A%d", accepted_share_count );
+            sprintf( bres, CL_LBL"block solved "CL_N"["CL_LBL"%d"CL_N"]", solved_block_count );
+            sprintf( ares, CL_YLW"|| "CL_N"["CL_GRN"A%d"CL_N"]", accepted_share_count );
         }
         else
         {
-            sprintf( bres, CL_MAG"[B%d]", solved_block_count );
-            sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]"CL_YLW" ||",  accepted_share_count );
+            sprintf( bres, CL_N"["CL_LBL"B%d"CL_N"]", solved_block_count );
+            sprintf( ares, CL_YLW"|| "CL_GRN"accepted "CL_N"["CL_GRN"%d"CL_N"]",  accepted_share_count );
         }
     }
     else
     {
-        sprintf( ares, CL_GRN"[A%d]", accepted_share_count );
-        sprintf( bres, CL_MAG"[B%d]", solved_block_count );
+        sprintf( ares, CL_YLW"|| "CL_N"["CL_GRN"A%d"CL_N"]", accepted_share_count );
+        sprintf( bres, CL_N"["CL_LBL"B%d"CL_N"]", solved_block_count );
         if ( reason )
             stale = strstr( reason, "job" );
         else if ( work )
@@ -1187,14 +1187,14 @@ static int share_result( int result, struct work *work, const char *reason )
         if ( stale )
         {
             stale_share_count++;
-            sprintf( sres, CL_YL2"stale [%d]", stale_share_count );
-            sprintf( rres, "[R%d]", rejected_share_count );
+            sprintf( sres, CL_YL2"stale "CL_N"["CL_YL2"%d"CL_N"]", stale_share_count );
+            sprintf( rres, CL_N"["CL_LRD"R%d"CL_N"]", rejected_share_count );
         }
         else
         {
             rejected_share_count++;
-            sprintf( sres, "[S%d]", stale_share_count );
-            sprintf( rres, "rejected %d" , rejected_share_count );
+            sprintf( sres, CL_N"["CL_YL2"S%d"CL_N"]", stale_share_count );
+            sprintf( rres, CL_LRD"rejected "CL_N"["CL_LRD"%d"CL_N"]", rejected_share_count );
         }
     }
 
