@@ -2035,7 +2035,7 @@ static void *miner_thread( void *userdata )
         }
         if ( !thr_id )
         {
-            applog( LOG_INFO, "User set miner thread priority %d (nice %d)",
+            applog( LOG_NOTICE, "User set miner thread priority %d (nice %d)",
                             opt_priority, prio );
             applog( LOG_WARNING, "High priority mining threads may cause system instability");
         }
@@ -3866,7 +3866,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
         if ( !opt_quiet )
-            applog( LOG_INFO,"API listening to %s:%d", opt_api_allow, opt_api_listen );
+            applog( LOG_NOTICE,"API listening to %s:%d", opt_api_allow, opt_api_listen );
     }
 
    // hold the stats lock while starting miner threads
