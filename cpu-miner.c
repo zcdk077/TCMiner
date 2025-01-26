@@ -164,7 +164,6 @@ uint32_t submitted_share_count= 0;
 uint32_t accepted_share_count = 0;
 uint32_t rejected_share_count = 0;
 uint32_t stale_share_count = 0;
-uint32_t combine_share_count = 0;
 uint32_t solved_block_count = 0;
 uint32_t stratum_errors = 0;
 double *thr_hashrates;
@@ -1035,7 +1034,6 @@ void report_summary_log( bool force )
     uint64_t rejects = reject_sum;  reject_sum = 0;
     uint64_t stales  = stale_sum;   stale_sum  = 0;
     uint64_t solved  = solved_sum;  solved_sum = 0;
-    uint64_t combine = reject_sum + stale_sum; reject_sum + stale_sum = 0;
     memcpy( &start_time, &five_min_start, sizeof start_time );
     memcpy( &five_min_start, &now, sizeof now );
 
@@ -1063,7 +1061,7 @@ void report_summary_log( bool force )
     sprintf_et( et_str, et.tv_sec );
     sprintf_et( upt_str, uptime.tv_sec );
 
-    applog( LOG_BLUE, "%s %s", algo_names[ opt_algo ], rpc_url );
+    applog( LOG_BLUE, "%s: %s", algo_names[ opt_algo ], rpc_url );
     applog2( LOG_NOTICE,CL_LCY"Periodic Report     %s        %s", et_str, upt_str );
     applog2( LOG_INFO, CL_YLW"Share rate        %.2f/min     %.2f/min", submit_rate, safe_div( (double)submitted_share_count*60., ( (double)uptime.tv_sec + (double)uptime.tv_usec * 1e-6 ), 0. ) );
     applog2( LOG_INFO,CL_YLW"Hash rate       %7.2f%sh/s   %7.2f%sh/s   (%.2f%sh/s)", shrate, shr_units, sess_hrate, sess_hr_units, ghrate, ghr_units );
@@ -1081,20 +1079,16 @@ void report_summary_log( bool force )
 
     applog2( LOG_INFO,CL_LGR"Submitted       %7d      %7d", submits, submitted_share_count );
     applog2( LOG_INFO,CL_LGR"Accepted        %7d      %7d      %5.1f%%", accepts, accepted_share_count, 100. * safe_div( (double)accepted_share_count, (double)submitted_share_count, 0. ) ); 
-/*
+
     if ( stale_share_count )
     {
         int prio = stales ? LOG_MINR : LOG_INFO;
-        applog2( prio,CL_YL2"Stale           %7d      %7d      %5.1f%%", stales, stale_share_count, 100. * safe_div( (double)stale_share_count, (double)submitted_share_count, 0. ) );
+        applog2( prio,CL_LRD"Stale           %7d      %7d      %5.1f%%", stales, stale_share_count, 100. * safe_div( (double)stale_share_count, (double)submitted_share_count, 0. ) );
     }
     if ( rejected_share_count )
     {
         int prio = rejects ? LOG_ERR : LOG_INFO;
         applog2( prio,CL_LRD"Rejected        %7d      %7d      %5.1f%%", rejects, rejected_share_count, 100. * safe_div( (double)rejected_share_count, (double)submitted_share_count, 0. ) );
-    }*/
-    if ( combine_share_count )
-    {
-        applog2( LOG_INFO, CL_LRD"Rejected        %7d      %7d      %5.1f%%", combine, combine_share_count, 100. * safe_div( (double)combine_share_count, (double)submitted_share_count, 0. ) );
     }
     if ( solved_block_count )
     {      
@@ -1103,7 +1097,7 @@ void report_summary_log( bool force )
     }
     if ( stratum_errors )
         applog2( LOG_INFO,CL_YLW"Stratum resets               %7d", stratum_errors );
-        applog2( LOG_BLU,"Hi/Lo Share Diff  %.5g /  %.5g", highest_share, lowest_share );
+        applog2( LOG_INFO,CL_CYN"Hi/Lo Share Diff  %.5g /  %.5g", highest_share, lowest_share );
 
         int mismatch = submitted_share_count - ( accepted_share_count + stale_share_count + rejected_share_count );
 
