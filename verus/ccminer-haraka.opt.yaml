@@ -1,7 +1,7 @@
 --- !Passed
 Pass:            gvn
 Name:            LoadElim
-DebugLoc:        { File: 'algo/verushash/haraka.c', Line: 72, Column: 29 }
+DebugLoc:        { File: 'verus/haraka.c', Line: 72, Column: 29 }
 Function:        haraka512_keyed
 Args:
   - String:          'load of type '
@@ -9,5 +9,5 @@ Args:
   - String:          ' eliminated'
   - String:          ' in favor of '
   - InfavorOfValue:  trunc
-    DebugLoc:        { File: 'algo/verushash/haraka.c', Line: 72, Column: 29 }
+    DebugLoc:        { File: 'verus/haraka.c', Line: 72, Column: 29 }
 ...

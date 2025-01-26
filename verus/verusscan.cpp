@@ -3,13 +3,12 @@
 * Solver taken from nheqminer, by djeZo (and NiceHash)
 * tpruvot - 2017 (GPL v3)
 */
-
-#include "algo-gate-api.h"
 //#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include "algo-gate-api.h"
 //#include <stringlib.h>   // dmi
 #define VERUS_KEY_SIZE 8832
 #define VERUS_KEY_SIZE128 552

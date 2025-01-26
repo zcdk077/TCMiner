@@ -13,6 +13,7 @@ This provides the PoW hash function for Verus, enabling CPU mining.
 
 #include <cstring>
 #include <vector>
+#include "algo-gate-api.h"
 
 #include "uint256.h"
 #include "verus_clhash.h"
