@@ -999,14 +999,14 @@ void report_summary_log( bool force )
             if ( use_colors && ( curr_temp >= 70 ) )
             {
                 if ( curr_temp >= 80 )
-                sprintf( tempstr, "%s%d C%s", CL_RED, curr_temp, CL_WHT );
+                sprintf( tempstr, "%s%d°C%s", CL_RED, curr_temp, CL_WHT );
                 else
-                sprintf( tempstr, "%s%d C%s", CL_YLW, curr_temp, CL_WHT );
+                sprintf( tempstr, "%s%d°C%s", CL_YLW, curr_temp, CL_WHT );
             }
             else
                 sprintf( tempstr, "%d C", curr_temp );
 
-            applog( LOG_NOTICE,CL_LCY"CPU temp :"CL_LRD"[%s]"CL_N", "CL_YLW"Freq :"CL_LGR" [%.3f]"CL_N"/"CL_LGR"[%.3f] "CL_YLW"GHz", tempstr, hi_temp, lo_freq / 1e6, hi_freq / 1e6 );
+            applog( LOG_NOTICE,CL_LCY"CPU temp : "CL_LRD"[%s]"CL_N", "CL_YLW"Freq :"CL_LGR" [%.3f]"CL_N"/"CL_LGR"[%.3f] "CL_YLW"GHz", tempstr, hi_temp, lo_freq / 1e6, hi_freq / 1e6 );
             if ( curr_temp > hi_temp ) hi_temp = curr_temp;
             if ( ( opt_max_temp > 0.0 ) && ( curr_temp > opt_max_temp ) )
                 restart_threads();
