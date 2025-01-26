@@ -632,7 +632,6 @@ enum algos {
         ALGO_VANILLA,
         ALGO_VELTOR,
         ALGO_VERTHASH,
-        ALGO_VERUSHASH,
         ALGO_WHIRLPOOL,
         ALGO_WHIRLPOOLX,
         ALGO_X11,
@@ -728,7 +727,6 @@ static const char* const algo_names[] = {
         "vanilla",
         "veltor",
         "verthash",
-        "verushash",
         "whirlpool",
         "whirlpoolx",
         "x11",
@@ -891,7 +889,6 @@ Options:\n\
                           vanilla       blake256r8vnl (VCash)\n\
                           veltor\n\
                           verthash\n\
-                          verushash     Veruscoin (VRSC)\n\
                           whirlpool\n\
                           whirlpoolx\n\
                           x11           Dash\n\
