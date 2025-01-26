@@ -350,6 +350,7 @@ bool register_algo_gate( int algo, algo_gate_t *gate )
     case ALGO_VANILLA:      rc = register_vanilla_algo       ( gate ); break;
     case ALGO_VELTOR:       rc = register_veltor_algo        ( gate ); break;
     case ALGO_VERTHASH:     rc = register_verthash_algo      ( gate ); break;
+    case ALGO_VERUSHASH:    rc = register_verushash_algo     ( gate ); break;
     case ALGO_WHIRLPOOL:    rc = register_whirlpool_algo     ( gate ); break;
     case ALGO_WHIRLPOOLX:   rc = register_whirlpoolx_algo    ( gate ); break;
     case ALGO_X11:          rc = register_x11_algo           ( gate ); break;
@@ -441,6 +442,7 @@ const char* const algo_alias_map[][2] =
   { "x16r-hex",          "hex"            },
   { "yenten",            "yescryptr16"    },
   { "ziftr",             "zr5"            },
+  { "verus",             "verushash"      },
   { NULL,                NULL             }   
 };
 
