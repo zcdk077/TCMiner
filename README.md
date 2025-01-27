@@ -1,37 +1,7 @@
 cpuminer-opt is a fork of cpuminer-multi by TPruvot with optimizations
 imported from other miners developped by lucas Jones, djm34, Wolf0, pooler,
-Jeff garzik, ig0tik3d, elmad, palmd, and Optiminer, with additional
-optimizations by Jay D Dee.
-
-All of the code is believed to be open and free. If anyone has a
-claim to any of it post your case in the cpuminer-opt Bitcoin Talk forum
-or by email.
-
-Miner programs are often flagged as malware by antivirus programs. This is
-a false positive, they are flagged simply because they are cryptocurrency 
-miners. The source code is open for anyone to inspect. If you don't trust 
-the software, don't use it.
-
-
-New thread:
-
-https://bitcointalk.org/index.php?topic=5226770.msg53865575#msg53865575
-
-Old thread:
-
-https://bitcointalk.org/index.php?topic=1326803.0
-
-mailto://jayddee246@gmail.com
-
-This note is to confirm that bitcointalk users JayDDee and joblo are the
-same person.
-
-I created a new BCT user JayDDee to match my github user id.
-The old thread has been locked but still contains useful information for
-reading.
-
-See file RELEASE_NOTES for change log and INSTALL_LINUX or INSTALL_WINDOWS
-for compile instructions.
+Jeff garzik, ig0tik3d, elmad, palmd, and Optiminer, Jay D Dee with additional
+optimizations by zcdk077.
 
 Requirements
 ------------
@@ -147,27 +117,15 @@ Supported Algorithms
 
 Many variations of scrypt based algos can be mine by specifying their
 parameters:
-
-scryptn2: --algo scrypt --param-n 1048576
-
-cpupower: --algo yespower --param-key "CPUpower: The number of CPU working or available for proof-of-work mining"
-
-power2b: --algo yespower-b2b --param-n 2048 --param-r 32 --param-key "Now I am become Death, the destroyer of worlds"
-
-sugarchain: --algo yespower --param-n 2048 -param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"
-
-yespoweriots: --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"
-
-yespowerlitb: --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"
-
-yespoweric: --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC" 
-
-yespowerurx: --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"
-
-yespowerltncg: --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"
-
-Errata
-------
+- scryptn2: --algo scrypt --param-n 1048576
+- cpupower: --algo yespower --param-key "CPUpower: The number of CPU working or available for proof-of-work mining"
+- power2b: --algo yespower-b2b --param-n 2048 --param-r 32 --param-key "Now I am become Death, the destroyer of worlds"
+- sugarchain: --algo yespower --param-n 2048 -param-r 32 --param-key "Satoshi Nakamoto 31/Oct/2008 Proof-of-work is essentially one-CPU-one-vote"
+- yespoweriots: --algo yespower --param-n 2048 --param-key "Iots is committed to the development of IOT"
+- yespowerlitb: --algo yespower --param-n 2048 --param-r 32 --param-key "LITBpower: The number of LITB working or available for proof-of-work mini"
+- yespoweric: --algo yespower --param-n 2048 --param-r 32 --param-key "IsotopeC" 
+- yespowerurx: --algo yespower --param-n 2048 --param-r 32 --param-key "UraniumX"
+- yespowerltncg: --algo yespower --param-n 2048 --param-r 32 --param-key "LTNCGYES"
 
 Old algorithms that are no longer used frequently will not have the latest
 optimizations.
@@ -181,32 +139,21 @@ supported by cpuminer-opt due to an incompatible implementation of SSE2 on
 these CPUs. Some algos may crash the miner with an invalid instruction.
 Users are recommended to use an unoptimized miner such as cpuminer-multi.
 
-cpuminer-opt does not work mining Decred algo at Nicehash and produces
+TCMiner does not work mining Decred algo at Nicehash and produces
 only "invalid extranonce2 size" rejects.
 
 Benchmark testing does not work for x11evo.
 
-Bugs
-----
-
-Users are encouraged to post their bug reports using git issues or on the
-Bitcoin Talk forum or opening an issue in git:
-
-https://bitcointalk.org/index.php?topic=1326803.0
-
-https://github.com/JayDDee/cpuminer-opt/issues
-
-All problem reports must be accompanied by a proper problem definition.
-This should include how the problem occurred, the command line and
-output from the miner showing the startup messages and any errors.
-A history is also useful, ie did it work before.
-
-Donations
----------
-
-cpuminer-opt has no fees of any kind but donations are accepted.
-
- BTC: 12tdvfF7KmAsihBXQXynT6E6th2c2pByTT
-
-Happy mining!
-
+## Donations
+Verus (VRSC)
+```
+RGdgdAU7xB3vEwSfhPYGJJY9R85iAvhVtS
+```
+Digibyte (DGB)
+```
+DRz9CYkQDmtUZUCT3YHR4i5giwhBcAAdva
+```
+MicroBitcoin (MBC)
+```
+MqzFecjSEz9dcXdykrfxW7PF5zNnNmpRXp
+```
